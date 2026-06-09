@@ -1,5 +1,6 @@
 {
   "name": "spring-fleet",
+  "description": "Tools for navigating, tracing, and debugging multi-repo Spring Boot microservice fleets.",
   "owner": {
     "name": "Tal Ayash"
   },
