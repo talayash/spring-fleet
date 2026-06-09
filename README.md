@@ -148,6 +148,8 @@ no third-party deps.
 - `/impact <symbol|file>` — find every consumer of shared-lib code across the fleet
 - Optional SessionStart hook to load fleet topology into context automatically
 
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## License
 
 MIT © Tal Ayash

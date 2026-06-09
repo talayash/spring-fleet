@@ -1,14 +1,19 @@
 {
   "name": "spring-fleet",
   "owner": {
-    "name": "Tal Ayash",
-    "url": "https://github.com/talayash"
+    "name": "Tal Ayash"
   },
   "plugins": [
     {
       "name": "spring-fleet",
       "source": "./",
-      "description": "Navigate, trace, and debug a fleet of multi-repo Spring Boot microservices."
+      "description": "Navigate, trace, and debug a fleet of multi-repo Spring Boot microservices.",
+      "version": "0.1.0",
+      "author": { "name": "Tal Ayash" },
+      "homepage": "https://github.com/talayash/spring-fleet",
+      "license": "MIT",
+      "category": "Developer Tools",
+      "tags": ["spring-boot", "microservices", "java", "debugging", "tracing", "logs", "monorepo"]
     }
   ]
 }
