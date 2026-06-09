@@ -1,0 +1,3 @@
+2026-06-09 14:23:01.600 [http-nio-8082-exec-1] INFO  [sessionId=ABC123 requestId=r-1] c.f.PaymentController - charge requested amount=120.00
+2026-06-09 14:23:02.200 [http-nio-8082-exec-1] ERROR [sessionId=ABC123 requestId=r-1] c.f.PaymentGatewayClient - upstream gateway timeout after 600ms
+2026-06-09 14:23:02.300 [http-nio-8082-exec-1] ERROR [sessionId=ABC123 requestId=r-1] c.f.PaymentController - returning 502 Bad Gateway

@@ -177,8 +177,9 @@ correlation and says so explicitly.
 ## Packaging (community-ready)
 
 - `plugin.json` (or `.claude-plugin/plugin.json`) manifest + `marketplace.json`.
-- Cross-platform scripts: `.ps1` and `.sh` variants, deterministic logic in
-  scripts so commands/agents stay thin.
+- Deterministic logic in dependency-free Python 3 scripts (single cross-platform
+  source — chosen over parallel `.ps1`/`.sh` to avoid duplication and keep the
+  logic unit-testable). Commands/agents stay thin and delegate to the scripts.
 - Maven or Gradle via `buildTool` in config.
 - MIT `LICENSE`, `README.md` (quickstart: install → `/fleet-init` → `/trace` /
   `/debug`), `CONTRIBUTING.md`, `.gitignore`.

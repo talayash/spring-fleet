@@ -1,0 +1,2 @@
+2026-06-09 14:23:01.220 [http-nio-8081-exec-1] INFO  [sessionId=ABC123 requestId=r-1] c.f.OrderController - create order
+2026-06-09 14:23:01.450 [http-nio-8081-exec-1] INFO  [sessionId=ABC123 requestId=r-1] c.f.OrderService - order created id=9001

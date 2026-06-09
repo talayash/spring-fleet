@@ -1,0 +1,51 @@
+{
+  "$schema": "./spring-fleet.config.schema.json",
+  "reposRoot": "/path/to/your/repos",
+  "buildTool": {
+    "type": "gradle",
+    "moduleFlag": "-p {module}",
+    "run": "bootRun",
+    "test": "test"
+  },
+  "logDir": "/path/to/your/repos/.spring-fleet-logs",
+  "traceKeys": ["sessionId", "requestId"],
+  "proxyLib": "api-proxy-lib",
+  "sharedLibs": [
+    {
+      "name": "core-lib",
+      "path": "core-lib",
+      "modules": ["entities", "data", "util"]
+    }
+  ],
+  "services": [
+    {
+      "name": "orchestrator",
+      "path": "orchestrator-api",
+      "port": 8080,
+      "contextPath": "/orchestrator-v1",
+      "logFile": "orchestrator.log",
+      "role": "orchestrator"
+    },
+    {
+      "name": "order",
+      "path": "order-api",
+      "port": 8081,
+      "contextPath": "/order-v1",
+      "logFile": "order.log"
+    },
+    {
+      "name": "payment",
+      "path": "payment-api",
+      "port": 8082,
+      "contextPath": "/payment-v1",
+      "logFile": "payment.log"
+    }
+  ],
+  "topology": {
+    "entry": ["orchestrator"],
+    "edges": [
+      ["orchestrator", "order"],
+      ["orchestrator", "payment"]
+    ]
+  }
+}

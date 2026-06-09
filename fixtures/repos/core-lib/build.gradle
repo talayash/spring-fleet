@@ -1,0 +1,9 @@
+plugins {
+    id 'java-library'
+}
+
+// Shared library. Mentions Spring Boot in this comment on purpose, to verify
+// the scanner does not misclassify a commented reference as a runnable service.
+dependencies {
+    api 'org.apache.commons:commons-lang3:3.14.0'
+}

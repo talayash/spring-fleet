@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "spring-fleet configuration",
+  "description": "Environment description for a fleet of multi-repo Spring Boot microservices. This file is private and must never be committed (see .gitignore).",
+  "type": "object",
+  "required": ["reposRoot", "buildTool", "logDir", "services"],
+  "additionalProperties": true,
+  "properties": {
+    "reposRoot": {
+      "type": "string",
+      "description": "Absolute path to the directory containing all service and shared-lib repos."
+    },
+    "buildTool": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["gradle", "maven"] },
+        "moduleFlag": {
+          "type": "string",
+          "description": "Template for building/running a single module. {module} is replaced by the module path. e.g. gradle: '-p {module}', maven: '-pl {module}'."
+        },
+        "run": { "type": "string", "description": "Task/goal to run a service locally. e.g. 'bootRun' or 'spring-boot:run'." },
+        "test": { "type": "string", "description": "Task/goal to run tests. e.g. 'test'." }
+      }
+    },
+    "logDir": {
+      "type": "string",
+      "description": "Absolute path to the directory where service logs are collected. One <service>.log per service."
+    },
+    "traceKeys": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "MDC keys that propagate across services and identify a single request/session (e.g. sessionId, requestId, traceId). Used to correlate logs. Order matters: the first key is the default correlation key."
+    },
+    "proxyLib": {
+      "type": "string",
+      "description": "Name of the generated inter-service client library (if any), used to follow service-to-service calls during tracing."
+    },
+    "sharedLibs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "path"],
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string", "description": "Path relative to reposRoot." },
+          "modules": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "services": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "path"],
+        "properties": {
+          "name": { "type": "string", "description": "Short logical name, also used as the log file base name." },
+          "path": { "type": "string", "description": "Path relative to reposRoot." },
+          "port": { "type": "integer" },
+          "contextPath": { "type": "string" },
+          "logFile": { "type": "string", "description": "Log file name within logDir. Defaults to <name>.log." },
+          "role": { "type": "string", "description": "Optional role marker, e.g. 'orchestrator'." }
+        }
+      }
+    },
+    "topology": {
+      "type": "object",
+      "description": "The request call-chain across services.",
+      "properties": {
+        "entry": { "type": "array", "items": { "type": "string" }, "description": "Service names that receive external requests." },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "description": "Directed [from, to] service-name pairs describing who calls whom."
+        }
+      }
+    }
+  }
+}

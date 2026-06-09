@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  spring-fleet logging convention.
+
+  Drop this into a service's src/main/resources/logback-spring.xml (or merge the
+  appender + pattern into an existing one). It writes a rolling log file into a
+  shared directory so spring-fleet can correlate logs across services.
+
+  Two things make correlation work:
+    1) FILE_PATH points every service at the same logDir, one file per service.
+    2) The pattern embeds your trace keys via %X{key} (MDC), so a request can be
+       followed across services by its sessionId / requestId / traceId.
+
+  Replace:
+    - ${SPRING_FLEET_LOG_DIR}  -> your config "logDir" (or set the env var)
+    - SERVICE_NAME             -> this service's spring-fleet "name"
+    - the %X{...} keys          -> your config "traceKeys"
+-->
+<configuration>
+
+  <property name="SPRING_FLEET_LOG_DIR"
+            value="${SPRING_FLEET_LOG_DIR:-${user.home}/.spring-fleet-logs}"/>
+  <property name="SERVICE_NAME" value="SERVICE_NAME"/>
+
+  <!-- Trace keys are surfaced via MDC. Add/remove %X{...} to match traceKeys. -->
+  <property name="FLEET_PATTERN"
+            value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [sessionId=%X{sessionId:-} requestId=%X{requestId:-}] %logger{36} - %msg%n"/>
+
+  <appender name="FLEET_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${SPRING_FLEET_LOG_DIR}/${SERVICE_NAME}.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${SPRING_FLEET_LOG_DIR}/${SERVICE_NAME}.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>7</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>${FLEET_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${FLEET_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="FLEET_FILE"/>
+    <appender-ref ref="CONSOLE"/>
+  </root>
+
+</configuration>

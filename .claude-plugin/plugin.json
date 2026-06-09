@@ -1,0 +1,21 @@
+{
+  "name": "spring-fleet",
+  "version": "0.1.0",
+  "description": "Navigate, trace, and debug a fleet of multi-repo Spring Boot microservices. Cross-repo call-chain tracing and trace-key-driven log correlation, driven by a single config file.",
+  "author": {
+    "name": "Tal Ayash",
+    "url": "https://github.com/talayash"
+  },
+  "homepage": "https://github.com/talayash/spring-fleet",
+  "repository": "https://github.com/talayash/spring-fleet",
+  "license": "MIT",
+  "keywords": [
+    "spring-boot",
+    "microservices",
+    "java",
+    "debugging",
+    "tracing",
+    "monorepo",
+    "multi-repo"
+  ]
+}

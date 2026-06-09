@@ -1,0 +1,14 @@
+{
+  "name": "spring-fleet",
+  "owner": {
+    "name": "Tal Ayash",
+    "url": "https://github.com/talayash"
+  },
+  "plugins": [
+    {
+      "name": "spring-fleet",
+      "source": "./",
+      "description": "Navigate, trace, and debug a fleet of multi-repo Spring Boot microservices."
+    }
+  ]
+}

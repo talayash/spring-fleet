@@ -1,0 +1,17 @@
+{
+  "reposRoot": "fixtures/repos",
+  "buildTool": { "type": "gradle", "moduleFlag": "-p {module}", "run": "bootRun", "test": "test" },
+  "logDir": "fixtures/logs",
+  "traceKeys": ["sessionId"],
+  "proxyLib": "api-proxy-lib",
+  "sharedLibs": [{ "name": "core-lib", "path": "core-lib", "modules": ["entities", "util"] }],
+  "services": [
+    { "name": "orchestrator", "path": "orchestrator-api", "port": 8080, "logFile": "orchestrator.log", "role": "orchestrator" },
+    { "name": "order", "path": "order-api", "port": 8081, "logFile": "order.log" },
+    { "name": "payment", "path": "payment-api", "port": 8082, "logFile": "payment.log" }
+  ],
+  "topology": {
+    "entry": ["orchestrator"],
+    "edges": [["orchestrator", "order"], ["orchestrator", "payment"]]
+  }
+}

@@ -5,6 +5,10 @@ spring-fleet.config.json
 # Local log collection dir (default)
 .spring-fleet-logs/
 
+# Python
+__pycache__/
+*.pyc
+
 # OS / editor noise
 .DS_Store
 Thumbs.db
