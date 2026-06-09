@@ -66,10 +66,23 @@ hard-coded into the plugin itself.
 
 ## Install
 
+Two steps, **in order** — you must add the marketplace *before* installing, or
+you'll get `Plugin "spring-fleet" not found in any marketplace`:
+
 ```
+# 1. Register the marketplace (clones this repo)
 /plugin marketplace add talayash/spring-fleet
-/plugin install spring-fleet
+
+# 2. Install the plugin from it
+/plugin install spring-fleet@spring-fleet
 ```
+
+`spring-fleet@spring-fleet` is `plugin@marketplace` — this repo's marketplace and
+plugin share the name. Once the marketplace is added, plain
+`/plugin install spring-fleet` also works.
+
+> Already added it and seeing a stale version? Refresh from GitHub with
+> `/plugin marketplace update spring-fleet`.
 
 ## Quickstart
 
