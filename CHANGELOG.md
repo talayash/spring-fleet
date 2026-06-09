@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/impact <symbol|file>` — find every consumer of shared-lib code across the fleet.
 - Optional SessionStart hook to load fleet topology into context automatically.
 
+## [0.1.1] — 2026-06-09
+
+### Fixed
+- `correlate_logs.py` text output no longer duplicates the timestamp (the raw log
+  line already begins with one). JSON output was unaffected. Added a regression test.
+
 ## [0.1.0] — 2026-06-09
 
 First public release.
@@ -31,5 +37,6 @@ First public release.
 ### Security / privacy
 - Real `spring-fleet.config.json` is git-ignored by default; the plugin contains no environment-specific paths, ports, or service names.
 
-[Unreleased]: https://github.com/talayash/spring-fleet/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/talayash/spring-fleet/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/talayash/spring-fleet/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/talayash/spring-fleet/releases/tag/v0.1.0

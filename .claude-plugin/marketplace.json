@@ -9,7 +9,7 @@
       "name": "spring-fleet",
       "source": "./",
       "description": "Navigate, trace, and debug a fleet of multi-repo Spring Boot microservices.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": { "name": "Tal Ayash" },
       "homepage": "https://github.com/talayash/spring-fleet",
       "license": "MIT",

@@ -66,6 +66,15 @@ class TestCorrelate(unittest.TestCase):
         records, _ = correlate_logs.correlate(self.cfg, "NOPE-NO-SUCH-ID")
         self.assertEqual(records, [])
 
+    def test_text_line_does_not_duplicate_timestamp(self):
+        records, _ = correlate_logs.correlate(self.cfg, "ABC123")
+        line = correlate_logs.format_text_line(records[0])
+        # The timestamp must appear exactly once in the rendered line.
+        self.assertEqual(line.count(records[0]["ts"]), 1)
+        # Format is "<ts> [service] <message>".
+        self.assertTrue(line.startswith(records[0]["ts"] + " "))
+        self.assertIn("[orchestrator]", line)
+
 
 class TestScanRepos(unittest.TestCase):
     def setUp(self):

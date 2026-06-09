@@ -1,6 +1,6 @@
 {
   "name": "spring-fleet",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Navigate, trace, and debug a fleet of multi-repo Spring Boot microservices. Cross-repo call-chain tracing and trace-key-driven log correlation, driven by a single config file.",
   "author": {
     "name": "Tal Ayash",

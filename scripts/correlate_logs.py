@@ -84,6 +84,21 @@ def correlate(config, value, service_filter=None):
     return records, missing
 
 
+def format_text_line(record):
+    """Render one record for text output as '<ts> [service] <message>'.
+
+    The raw line already begins with its own timestamp; strip that leading copy
+    so the printed timestamp is not duplicated.
+    """
+    if record["ts"]:
+        message = TS_RE.sub("", record["line"], count=1).lstrip()
+        ts = record["ts"]
+    else:
+        message = record["line"]
+        ts = "?"
+    return "{ts:<23} [{svc}] {line}".format(ts=ts, svc=record["service"], line=message)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Correlate fleet logs by trace value.")
     ap.add_argument("--config", required=True, help="Path to spring-fleet.config.json")
@@ -112,8 +127,7 @@ def main(argv=None):
         if not records:
             print("# no log lines matched value '{}'".format(args.value))
         for r in records:
-            print("{ts:<23} [{svc}] {line}".format(
-                ts=r["ts"] or "?", svc=r["service"], line=r["line"]))
+            print(format_text_line(r))
     return 0
 
 
