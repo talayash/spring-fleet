@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="180" viewBox="0 0 680 180" font-family="'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#111c33"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fd14f"/>
+      <stop offset="1" stop-color="#6db33f"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="680" height="180" rx="22" fill="url(#bg)"/>
+
+  <!-- Fleet network icon: nodes + traced path, ending at a failing (red) node -->
+  <g transform="translate(46,40)" stroke-linecap="round">
+    <!-- edges -->
+    <g stroke="#334155" stroke-width="3" fill="none">
+      <line x1="50" y1="20" x2="14" y2="60"/>
+      <line x1="50" y1="20" x2="92" y2="58"/>
+      <line x1="14" y1="60" x2="40" y2="100"/>
+    </g>
+    <!-- highlighted trace path: entry -> hop -> failure -->
+    <g stroke="#6db33f" stroke-width="4" fill="none" stroke-dasharray="2 0">
+      <line x1="50" y1="20" x2="92" y2="58"/>
+      <line x1="92" y1="58" x2="64" y2="100"/>
+    </g>
+    <!-- nodes -->
+    <circle cx="50" cy="20" r="13" fill="url(#leaf)"/>
+    <circle cx="14" cy="60" r="11" fill="#1e293b" stroke="#475569" stroke-width="3"/>
+    <circle cx="92" cy="58" r="12" fill="#1e293b" stroke="#6db33f" stroke-width="4"/>
+    <circle cx="40" cy="100" r="10" fill="#1e293b" stroke="#475569" stroke-width="3"/>
+    <!-- failure node -->
+    <circle cx="64" cy="100" r="12" fill="#1e293b" stroke="#ef4444" stroke-width="4"/>
+    <text x="64" y="105" text-anchor="middle" font-size="15" fill="#ef4444" font-weight="700">!</text>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="210" y="86" font-size="46" font-weight="800" fill="#f1f5f9">spring<tspan fill="#6db33f">-</tspan>fleet</text>
+  <text x="212" y="120" font-size="19" font-weight="500" fill="#94a3b8">trace &amp; debug multi-repo Spring Boot microservices</text>
+  <text x="212" y="146" font-size="14" font-weight="600" fill="#6db33f" letter-spacing="1.5">A CLAUDE CODE PLUGIN</text>
+</svg>

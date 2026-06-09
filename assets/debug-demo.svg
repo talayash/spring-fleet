@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="600" viewBox="0 0 940 600" font-family="'JetBrains Mono','Fira Code',Consolas,Menlo,monospace">
+  <style>
+    .t   { font-size:14.5px; }
+    .dim { fill:#64748b; }
+    .fg  { fill:#cbd5e1; }
+    .hdr { fill:#38bdf8; font-weight:700; }
+    .ok  { fill:#6db33f; }
+    .err { fill:#ef4444; font-weight:700; }
+    .warnlbl { fill:#fbbf24; font-weight:700; }
+    .svc { fill:#a78bfa; }
+    .prompt { fill:#6db33f; font-weight:700; }
+  </style>
+
+  <rect x="0" y="0" width="940" height="600" rx="14" fill="#0b1120"/>
+  <!-- title bar -->
+  <rect x="0" y="0" width="940" height="40" rx="14" fill="#1e293b"/>
+  <rect x="0" y="20" width="940" height="20" fill="#1e293b"/>
+  <circle cx="26" cy="20" r="6" fill="#ff5f56"/>
+  <circle cx="48" cy="20" r="6" fill="#ffbd2e"/>
+  <circle cx="70" cy="20" r="6" fill="#27c93f"/>
+  <text x="470" y="25" text-anchor="middle" font-size="13" fill="#94a3b8">spring-fleet — Claude Code</text>
+
+  <g class="t">
+    <text x="24" y="74"><tspan class="prompt">&gt; </tspan><tspan class="fg">/debug ABC123</tspan></text>
+
+    <text x="24" y="104" class="dim"># dispatching log-correlator across the fleet…</text>
+
+    <text x="24" y="138"><tspan class="hdr">TRACE VALUE:</tspan> <tspan class="fg">ABC123</tspan>  <tspan class="dim">(key: sessionId)</tspan></text>
+    <text x="24" y="160"><tspan class="hdr">SERVICES SEEN:</tspan> <tspan class="fg">orchestrator, order, payment</tspan>   <tspan class="hdr">MISSING LOGS:</tspan> <tspan class="ok">none</tspan></text>
+
+    <text x="24" y="194" class="hdr">TIMELINE:</text>
+    <text x="24" y="216"><tspan class="dim">14:23:01.100</tspan> <tspan class="svc">[orchestrator]</tspan> <tspan class="fg">received reserve request</tspan></text>
+    <text x="24" y="238"><tspan class="dim">14:23:01.180</tspan> <tspan class="svc">[orchestrator]</tspan> <tspan class="fg">calling order-api</tspan></text>
+    <text x="24" y="260"><tspan class="dim">14:23:01.220</tspan> <tspan class="svc">[order]       </tspan> <tspan class="fg">create order</tspan></text>
+    <text x="24" y="282"><tspan class="dim">14:23:01.450</tspan> <tspan class="svc">[order]       </tspan> <tspan class="fg">order created id=9001</tspan></text>
+    <text x="24" y="304"><tspan class="dim">14:23:01.500</tspan> <tspan class="svc">[orchestrator]</tspan> <tspan class="fg">calling payment-api</tspan></text>
+    <text x="24" y="326"><tspan class="dim">14:23:01.600</tspan> <tspan class="svc">[payment]     </tspan> <tspan class="fg">charge requested amount=120.00</tspan></text>
+    <text x="24" y="348"><tspan class="dim">14:23:02.200</tspan> <tspan class="svc">[payment]     </tspan> <tspan class="warnlbl">ERROR</tspan> <tspan class="fg">upstream gateway timeout after 600ms</tspan></text>
+    <text x="24" y="370"><tspan class="dim">14:23:02.300</tspan> <tspan class="svc">[payment]     </tspan> <tspan class="warnlbl">ERROR</tspan> <tspan class="fg">returning 502 Bad Gateway</tspan></text>
+    <text x="24" y="392"><tspan class="dim">14:23:02.350</tspan> <tspan class="svc">[orchestrator]</tspan> <tspan class="warnlbl">ERROR</tspan> <tspan class="fg">payment-api returned 502, aborting</tspan></text>
+
+    <text x="24" y="430"><tspan class="err">FAILURE ORIGIN:</tspan> <tspan class="fg">payment @ 14:23:02.200</tspan></text>
+    <text x="44" y="452" class="dim">PaymentGatewayClient.java:48 — upstream gateway timeout after 600ms</text>
+    <text x="24" y="480"><tspan class="hdr">PROPAGATION:</tspan> <tspan class="fg">payment → 502 → orchestrator aborts reserve</tspan></text>
+    <text x="24" y="508"><tspan class="hdr">LIKELY CAUSE:</tspan> <tspan class="fg">gateway exceeded the 600ms client timeout; not a logic bug in</tspan></text>
+    <text x="24" y="530" class="fg">              the orchestrator. Raise the timeout or add a retry/circuit-breaker.</text>
+
+    <text x="24" y="566"><tspan class="prompt">&gt; </tspan><tspan class="fg">_</tspan></text>
+  </g>
+</svg>

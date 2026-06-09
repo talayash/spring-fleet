@@ -1,3 +1,16 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="spring-fleet" width="560"/>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6db33f.svg" alt="MIT License"/></a>
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.x-6db33f.svg?logo=springboot&logoColor=white" alt="Spring Boot 3.x"/>
+  <img src="https://img.shields.io/badge/Java-17%2B-orange.svg?logo=openjdk&logoColor=white" alt="Java 17+"/>
+  <img src="https://img.shields.io/badge/Python-3.8%2B%20(stdlib%20only)-3776ab.svg?logo=python&logoColor=white" alt="Python 3.8+"/>
+  <img src="https://img.shields.io/badge/Claude%20Code-plugin-d97757.svg" alt="Claude Code plugin"/>
+  <img src="https://img.shields.io/badge/tests-11%20passing-brightgreen.svg" alt="Tests"/>
+</p>
+
 # spring-fleet
 
 A [Claude Code](https://claude.com/claude-code) plugin for navigating, tracing,
@@ -14,6 +27,18 @@ It does two things well:
 The plugin is **generic**. Everything specific to *your* environment — repo
 paths, ports, service names, trace keys — lives in one private config file that
 is **git-ignored and never committed**.
+
+## `/debug` in action
+
+One trace key, every service's logs merged into a single timeline, the failing
+hop isolated and explained — across repos:
+
+<p align="center">
+  <img src="assets/debug-demo.svg" alt="spring-fleet /debug correlating logs across three services" width="820"/>
+</p>
+
+> The output above is the real correlator running against the bundled
+> [`fixtures/`](fixtures/) fleet — reproduce it with the [demo command](#try-the-demo-no-setup).
 
 ---
 
