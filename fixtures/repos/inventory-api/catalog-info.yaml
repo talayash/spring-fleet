@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: inventory-api
+  description: Inventory service for the demo fleet
+  tags:
+    - spring-boot
+    - java
+spec:
+  type: service
+  lifecycle: production
+  owner: team-fleet
+  system: fleet-platform
+  dependsOn:
+    - component:order-api
+    - resource:postgres-inventory

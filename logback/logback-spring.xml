@@ -9,12 +9,22 @@
   Two things make correlation work:
     1) FILE_PATH points every service at the same logDir, one file per service.
     2) The pattern embeds your trace keys via %X{key} (MDC), so a request can be
-       followed across services by its sessionId / requestId / traceId.
+       followed across services by its OTel trace_id (and/or legacy sessionId
+       / requestId).
+
+  Trace keys (in priority order, matches scan_repos.py defaults):
+    - trace_id, span_id : Micrometer Observation / OpenTelemetry. W3C
+      traceparent is auto-propagated by Spring Boot 3.x+ when the OTel starter
+      (or spring-boot-starter-actuator + Micrometer Tracing) is on the
+      classpath. trace_id is a 32-char lowercase hex string and is the modern
+      primary correlation key.
+    - sessionId, requestId : legacy MDC keys for older Spring fleets that
+      pre-date the Observation API. Kept as fallback.
 
   Replace:
     - ${SPRING_FLEET_LOG_DIR}  -> your config "logDir" (or set the env var)
     - SERVICE_NAME             -> this service's spring-fleet "name"
-    - the %X{...} keys          -> your config "traceKeys"
+    - the %X{...} keys          -> match your config "traceKeys"
 -->
 <configuration>
 
@@ -22,9 +32,12 @@
             value="${SPRING_FLEET_LOG_DIR:-${user.home}/.spring-fleet-logs}"/>
   <property name="SERVICE_NAME" value="SERVICE_NAME"/>
 
-  <!-- Trace keys are surfaced via MDC. Add/remove %X{...} to match traceKeys. -->
+  <!-- Trace keys are surfaced via MDC. Add/remove %X{...} to match traceKeys.
+       trace_id / span_id are the Micrometer Observation conventions, set
+       automatically when Micrometer Tracing or the OpenTelemetry starter is on
+       the classpath. sessionId / requestId are kept as a legacy fallback. -->
   <property name="FLEET_PATTERN"
-            value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [sessionId=%X{sessionId:-} requestId=%X{requestId:-}] %logger{36} - %msg%n"/>
+            value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [trace_id=%X{trace_id:-} span_id=%X{span_id:-} sessionId=%X{sessionId:-} requestId=%X{requestId:-}] %logger{36} - %msg%n"/>
 
   <appender name="FLEET_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${SPRING_FLEET_LOG_DIR}/${SERVICE_NAME}.log</file>

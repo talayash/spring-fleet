@@ -75,6 +75,23 @@ class TestCorrelate(unittest.TestCase):
         self.assertTrue(line.startswith(records[0]["ts"] + " "))
         self.assertIn("[orchestrator]", line)
 
+    def test_correlates_by_w3c_trace_id(self):
+        """OTel W3C trace_id is a 32-char lowercase hex string and is the
+        modern primary correlation key (Micrometer Observation MDC). The same
+        trace_id must appear on every service participating in the request."""
+        trace_id = "4bf92f3577b34da6a3ce929d0e0e4736"
+        records, missing = correlate_logs.correlate(self.cfg, trace_id)
+        self.assertEqual(missing, [])
+        services = {r["service"] for r in records}
+        self.assertEqual(services, {"orchestrator", "order", "payment"})
+
+    def test_each_service_has_distinct_span_id(self):
+        """Each service hop gets its own 16-hex span_id under a shared trace_id.
+        Correlating on a service-specific span_id must return only that service."""
+        records, _ = correlate_logs.correlate(self.cfg, "00f067aa0ba902b7")
+        self.assertTrue(records, "expected payment-only span lines")
+        self.assertEqual({r["service"] for r in records}, {"payment"})
+
 
 class TestScanRepos(unittest.TestCase):
     def setUp(self):
@@ -96,9 +113,87 @@ class TestScanRepos(unittest.TestCase):
     def test_build_tool_is_gradle(self):
         self.assertEqual(self.draft["buildTool"]["type"], "gradle")
 
-    def test_draft_includes_placeholder_topology(self):
+    def test_draft_includes_topology_shape(self):
+        """The draft always has a topology object with entry + edges arrays.
+        Edges may be empty (no Backstage catalog files present) or populated
+        (Backstage catalog-info.yaml dependsOn was ingested) — either is
+        fine here; the dedicated TestBackstageIngestion tests cover content."""
         self.assertIn("topology", self.draft)
-        self.assertEqual(self.draft["topology"]["edges"], [])
+        self.assertIn("entry", self.draft["topology"])
+        self.assertIn("edges", self.draft["topology"])
+        self.assertIsInstance(self.draft["topology"]["entry"], list)
+        self.assertIsInstance(self.draft["topology"]["edges"], list)
+
+    def test_default_trace_keys_lead_with_otel(self):
+        """scan_repos must produce OTel-first trace keys by default so new
+        configs land aligned with Micrometer Observation / OpenTelemetry."""
+        self.assertEqual(self.draft["traceKeys"][:2], ["trace_id", "span_id"])
+
+
+class TestStackDetection(unittest.TestCase):
+    """scan_repos.py learns the modern Spring Boot stack so consumers (MCP
+    tools, /run, agents) can branch on what's actually deployed."""
+
+    def setUp(self):
+        self.root = os.path.join(FIXTURES, "repos")
+        self.draft = scan_repos.scan(self.root, log_dir=None)
+        self.services = {s["name"]: s for s in self.draft["services"]}
+
+    def test_inventory_api_is_detected(self):
+        self.assertIn("inventory-api", self.services)
+
+    def test_inventory_api_stack_is_modern(self):
+        stack = self.services["inventory-api"].get("stack", {})
+        self.assertEqual(stack.get("springBootMajor"), 4)
+        self.assertEqual(stack.get("java"), 21)
+        self.assertTrue(stack.get("virtualThreads"))
+        self.assertTrue(stack.get("graalNative"))
+        self.assertTrue(stack.get("dockerCompose"))
+        self.assertTrue(stack.get("testcontainers"))
+        self.assertTrue(stack.get("opentelemetry"))
+        self.assertTrue(stack.get("springAiMcpServer"),
+                        "fixture inventory-api ships a Spring AI MCP server starter")
+
+    def test_order_api_is_spring_boot_3_baseline(self):
+        stack = self.services["order-api"].get("stack", {})
+        self.assertEqual(stack.get("springBootMajor"), 3)
+        # order-api is the baseline fixture: no compose, no testcontainers,
+        # no virtual threads, no native plugin, no OTel.
+        self.assertFalse(stack.get("dockerCompose"))
+        self.assertFalse(stack.get("testcontainers"))
+        self.assertFalse(stack.get("virtualThreads"))
+        self.assertFalse(stack.get("graalNative"))
+        self.assertFalse(stack.get("opentelemetry"))
+
+
+class TestBackstageIngestion(unittest.TestCase):
+    """Backstage's catalog-info.yaml dominates the 2026 service-catalog space.
+    Ingesting it gives scan_repos a free source of ownership + dependencies."""
+
+    def setUp(self):
+        self.root = os.path.join(FIXTURES, "repos")
+        self.draft = scan_repos.scan(self.root, log_dir=None)
+        self.services = {s["name"]: s for s in self.draft["services"]}
+
+    def test_catalog_owner_and_system_lifted_into_service(self):
+        inv = self.services["inventory-api"]
+        self.assertEqual(inv.get("backstage", {}).get("owner"), "team-fleet")
+        self.assertEqual(inv.get("backstage", {}).get("system"), "fleet-platform")
+        self.assertEqual(inv.get("backstage", {}).get("lifecycle"), "production")
+
+    def test_depends_on_components_become_topology_edges(self):
+        """A `dependsOn: component:order-api` in inventory's catalog becomes
+        an edge inventory-api -> order-api in the topology draft."""
+        edges = self.draft["topology"]["edges"]
+        self.assertIn(["inventory-api", "order-api"], edges)
+
+    def test_components_become_topology_entries_when_no_inbound_edges(self):
+        """A component with no inbound `dependsOn:component:` reference is a
+        topology entry candidate. inventory-api has no inbound, so it should
+        be in entry; order-api has an inbound from inventory and should not."""
+        entries = self.draft["topology"]["entry"]
+        self.assertIn("inventory-api", entries)
+        self.assertNotIn("order-api", entries)
 
 
 if __name__ == "__main__":

@@ -1,2 +1,2 @@
-2026-06-09 14:23:01.220 [http-nio-8081-exec-1] INFO  [sessionId=ABC123 requestId=r-1] c.f.OrderController - create order
-2026-06-09 14:23:01.450 [http-nio-8081-exec-1] INFO  [sessionId=ABC123 requestId=r-1] c.f.OrderService - order created id=9001
+2026-06-09 14:23:01.220 [http-nio-8081-exec-1] INFO  [trace_id=4bf92f3577b34da6a3ce929d0e0e4736 span_id=929d0e0e47364bf9 sessionId=ABC123 requestId=r-1] c.f.OrderController - create order
+2026-06-09 14:23:01.450 [http-nio-8081-exec-1] INFO  [trace_id=4bf92f3577b34da6a3ce929d0e0e4736 span_id=929d0e0e47364bf9 sessionId=ABC123 requestId=r-1] c.f.OrderService - order created id=9001

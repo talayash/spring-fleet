@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: order-api
+  description: Order service for the demo fleet
+spec:
+  type: service
+  lifecycle: production
+  owner: team-fleet
+  system: fleet-platform

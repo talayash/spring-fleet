@@ -2,7 +2,7 @@
   "reposRoot": "fixtures/repos",
   "buildTool": { "type": "gradle", "moduleFlag": "-p {module}", "run": "bootRun", "test": "test" },
   "logDir": "fixtures/logs",
-  "traceKeys": ["sessionId"],
+  "traceKeys": ["trace_id", "span_id", "sessionId", "requestId"],
   "proxyLib": "api-proxy-lib",
   "sharedLibs": [{ "name": "core-lib", "path": "core-lib", "modules": ["entities", "util"] }],
   "services": [

@@ -4,25 +4,37 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6db33f.svg" alt="MIT License"/></a>
-  <img src="https://img.shields.io/badge/Spring%20Boot-3.x-6db33f.svg?logo=springboot&logoColor=white" alt="Spring Boot 3.x"/>
-  <img src="https://img.shields.io/badge/Java-17%2B-orange.svg?logo=openjdk&logoColor=white" alt="Java 17+"/>
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.x%20%2F%204.x-6db33f.svg?logo=springboot&logoColor=white" alt="Spring Boot 3.x / 4.x"/>
+  <img src="https://img.shields.io/badge/Java-17%2B%20(21%2F25%20ready)-orange.svg?logo=openjdk&logoColor=white" alt="Java 17+ (21/25 ready)"/>
   <img src="https://img.shields.io/badge/Python-3.8%2B%20(stdlib%20only)-3776ab.svg?logo=python&logoColor=white" alt="Python 3.8+"/>
+  <img src="https://img.shields.io/badge/OpenTelemetry-W3C%20traceparent-blueviolet.svg" alt="OpenTelemetry W3C traceparent"/>
+  <img src="https://img.shields.io/badge/MCP-server%20included-7c3aed.svg" alt="MCP server included"/>
   <img src="https://img.shields.io/badge/Claude%20Code-plugin-d97757.svg" alt="Claude Code plugin"/>
-  <img src="https://img.shields.io/badge/tests-11%20passing-brightgreen.svg" alt="Tests"/>
+  <img src="https://img.shields.io/badge/tests-48%20passing-brightgreen.svg" alt="Tests"/>
 </p>
 
 # spring-fleet
 
-A [Claude Code](https://claude.com/claude-code) plugin for navigating, tracing,
-and debugging a **fleet of multi-repo Spring Boot microservices**.
+The **OpenTelemetry-native, MCP-first** [Claude Code](https://claude.com/claude-code)
+plugin for navigating, tracing, and debugging a **fleet of multi-repo
+Spring Boot microservices**.
 
-It does two things well:
+It does three things well:
 
 - **🔍 Trace** — follow a request or feature across many service repos and shared
   libraries, with `file:line` citations, including inter-service (proxy-lib) hops.
-- **🐞 Debug** — when a local dev run breaks, correlate logs across every service
-  by a trace key (`sessionId`, `requestId`…), reconstruct one cross-service
-  timeline, find the failing hop, and map it back to source.
+- **🐞 Debug** — correlate logs across every service by an OTel `trace_id` (or
+  legacy `sessionId`), reconstruct one cross-service timeline, isolate the
+  failing hop, and produce a code-grounded **root-cause hypothesis** with
+  `file:line` and a suggested fix — the open-source analogue of Sentry Seer /
+  Datadog Bits, but repo-aware.
+- **💥 Impact** — fan outward from a shared-lib symbol or service endpoint and
+  list every consumer across the fleet, classified by call kind and contract risk.
+
+Under the hood it ships an **MCP server** so Claude calls typed tools instead of
+parsing CLI output, a **SessionStart hook** that loads your topology
+automatically, and **Backstage `catalog-info.yaml` ingestion** so multi-repo
+fleets initialize with one command.
 
 The plugin is **generic**. Everything specific to *your* environment — repo
 paths, ports, service names, trace keys — lives in one private config file that
@@ -112,10 +124,29 @@ plugin share the name. Once the marketplace is added, plain
 
 | Command | What it does |
 |---|---|
-| `/fleet-init [reposRoot]` | Scan repos → generate/update `spring-fleet.config.json` |
-| `/trace <endpoint\|feature>` | Cross-repo call chain with `file:line` citations |
-| `/debug <traceValue \| error>` | Cross-service log timeline → failure origin → fix |
-| `/logs [service\|all] [--grep --lines --follow]` | Tail/aggregate fleet logs |
+| `/fleet-init [reposRoot]` | Scan repos → generate/update `spring-fleet.config.json` (detects Spring Boot major, Java toolchain, virtual threads, GraalVM native, `compose.yaml`, Testcontainers, OTel, Spring AI MCP server; ingests Backstage `catalog-info.yaml`). |
+| `/trace <endpoint\|feature>` | Cross-repo call chain with `file:line` citations. |
+| `/debug <trace_id \| sessionId \| error \| screenshot>` | Cross-service log timeline → failure origin → **root-cause hypothesis** with `file:line` and suggested fix. Accepts pasted Grafana / stack-trace images. |
+| `/impact <symbol \| file \| endpoint>` | Fan outward: every consumer across the fleet, classified by call kind and contract risk. |
+| `/run [service\|all] [--execute]` | Plan or launch the fleet locally — compose-first per service, gradle/maven fallback, stdout tee'd to `<logDir>`. |
+| `/logs [service\|all] [--grep --lines --follow --k8s]` | Tail/aggregate fleet logs; `--k8s` falls back to `kubectl logs` (mirrord-friendly). |
+
+## MCP tools
+
+`.mcp.json` registers a stdlib MCP server that exposes the fleet operations as
+typed tools so Claude (and any other MCP-aware client) can call them
+deterministically:
+
+- `list_services` — services + stack + sharedLibs + traceKeys
+- `get_topology` — entry services + `[from, to]` edges
+- `correlate_by_trace` — cross-service timeline for a trace value
+- `tail_service_log` — last N lines of one or more service logs
+- `scan_repos_root` — draft config from a repos directory
+- `find_service_log_path` — resolve a service name to its log path
+
+Fleets whose services ship their own Spring AI MCP server (Spring AI 1.1+) can
+federate those servers alongside spring-fleet's — see the
+`federating-mcp-servers` skill.
 
 ## Configuration
 
@@ -156,10 +187,9 @@ no third-party deps.
 
 ## Roadmap
 
-- `/run` — launch services and tee stdout to `logDir` (for services you can't
-  reconfigure)
-- `/impact <symbol|file>` — find every consumer of shared-lib code across the fleet
-- Optional SessionStart hook to load fleet topology into context automatically
+- Streamable HTTP transport for the MCP server (current ships stdio only).
+- `/incident` — bundles `/debug` + `/impact` into a postmortem-style writeup.
+- Optional GitHub PR comment integration (Vercel Agent / Sentry Seer style).
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 

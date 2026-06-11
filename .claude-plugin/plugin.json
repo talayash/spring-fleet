@@ -1,7 +1,7 @@
 {
   "name": "spring-fleet",
-  "version": "0.1.1",
-  "description": "Navigate, trace, and debug a fleet of multi-repo Spring Boot microservices. Cross-repo call-chain tracing and trace-key-driven log correlation, driven by a single config file.",
+  "version": "0.2.0",
+  "description": "OpenTelemetry-native, MCP-first debugging layer for multi-repo Spring Boot microservice fleets. Cross-repo call-chain tracing, trace_id-correlated log timelines with code-grounded root-cause hypothesis, and a stdlib MCP server exposing fleet operations as typed tools.",
   "author": {
     "name": "Tal Ayash",
     "url": "https://github.com/talayash"
@@ -16,6 +16,38 @@
     "debugging",
     "tracing",
     "monorepo",
-    "multi-repo"
-  ]
+    "multi-repo",
+    "observability",
+    "opentelemetry",
+    "mcp",
+    "spring-ai"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/session_start.py\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/subagent_stop.py\""
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/statusline.py\""
+  }
 }

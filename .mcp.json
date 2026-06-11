@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "spring-fleet": {
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mcp_server.py"],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

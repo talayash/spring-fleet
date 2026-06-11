@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: tests (${{ matrix.os }} / py${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.8", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run unittest suite
+        run: python -m unittest discover -s tests -v
+
+  validate-manifest:
+    name: validate plugin manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Plugin / marketplace manifests are valid JSON
+        run: |
+          python -c "import json; json.load(open('.claude-plugin/plugin.json')); print('plugin.json OK')"
+          python -c "import json; json.load(open('.claude-plugin/marketplace.json')); print('marketplace.json OK')"
+          python -c "import json; json.load(open('.mcp.json')); print('.mcp.json OK')"
+          python -c "import json; json.load(open('spring-fleet.config.schema.json')); print('schema OK')"
+          python -c "import json; json.load(open('spring-fleet.config.example.json')); print('example config OK')"
+          python -c "import json; json.load(open('fixtures/fleet.config.json')); print('fixture config OK')"
+
+      - name: Plugin version matches CHANGELOG / marketplace
+        run: |
+          python - <<'PY'
+          import json, re, sys
+          plugin = json.load(open('.claude-plugin/plugin.json'))
+          marketplace = json.load(open('.claude-plugin/marketplace.json'))
+          assert plugin['version'] == marketplace['plugins'][0]['version'], \
+              f"plugin.json {plugin['version']!r} != marketplace {marketplace['plugins'][0]['version']!r}"
+          with open('CHANGELOG.md') as fh:
+              changelog = fh.read()
+          if not re.search(rf"^## \[{re.escape(plugin['version'])}\]", changelog, re.MULTILINE):
+              sys.exit(f"CHANGELOG missing section for v{plugin['version']}")
+          print(f"versions consistent at {plugin['version']}")
+          PY

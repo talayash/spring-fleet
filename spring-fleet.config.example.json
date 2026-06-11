@@ -8,7 +8,7 @@
     "test": "test"
   },
   "logDir": "/path/to/your/repos/.spring-fleet-logs",
-  "traceKeys": ["sessionId", "requestId"],
+  "traceKeys": ["trace_id", "span_id", "sessionId", "requestId"],
   "proxyLib": "api-proxy-lib",
   "sharedLibs": [
     {
@@ -38,7 +38,16 @@
       "path": "payment-api",
       "port": 8082,
       "contextPath": "/payment-v1",
-      "logFile": "payment.log"
+      "logFile": "payment.log",
+      "stack": {
+        "springBootMajor": 4,
+        "java": 21,
+        "virtualThreads": true,
+        "graalNative": false,
+        "dockerCompose": true,
+        "testcontainers": true,
+        "opentelemetry": true
+      }
     }
   ],
   "topology": {

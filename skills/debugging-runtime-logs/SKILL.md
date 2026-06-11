@@ -17,9 +17,11 @@ the whole fleet and ties the failure back to code.
 
 ## Procedure
 
-1. **Get a correlation handle.** Best case: a trace value the user already has
-   (a `sessionId` from a failed request, an `X-Request-Id` header). Otherwise,
-   start from the error message/stack the user pasted.
+1. **Get a correlation handle.** Best case: an OTel `trace_id` (32-char hex)
+   from the user's APM dashboard or a `traceparent` header, or a legacy
+   `sessionId` / `X-Request-Id` from a failed request. Otherwise, start from
+   the error message/stack the user pasted — extract a key from a nearby log
+   line, preferring `trace_id` over `sessionId`.
 
 2. **Dispatch the `log-correlator` agent** with the config path and the trace
    value (or error snippet). It runs `scripts/correlate_logs.py` and returns one
@@ -41,9 +43,12 @@ the whole fleet and ties the failure back to code.
    agent (or use the `tracing-across-services` skill) to confirm the call path.
 
 5. **Report.** State: what the user did, the cross-service timeline, the failure
-   origin (service + `file:line`), how it surfaced upstream, the likely cause,
-   and a concrete fix. Call out any service with **no log file** — a missing log
-   can hide the real cause.
+   origin (service + `file:line`), how it surfaced upstream, and a
+   **ROOT-CAUSE HYPOTHESIS** block — what the fault is, where in code to fix
+   it, why the timeline supports that, your confidence, and a concrete
+   suggested fix (snippet or behavior). Always include alternatives the
+   evidence does not rule out. Call out any service with **no log file** —
+   a missing log can hide the real cause.
 
 ## Fallbacks
 
