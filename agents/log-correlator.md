@@ -32,12 +32,16 @@ your output is consumed by the main agent.
      timestamp window + endpoint, and say so explicitly.
 
 3. **Run the correlator** (deterministic, do not hand-grep when this works):
-   ```
-   python "${CLAUDE_PLUGIN_ROOT}/scripts/correlate_logs.py" \
-     --config <config-path> --value <traceValue> --format json
-   ```
-   This returns every matching line across all services, merged chronologically,
-   tagged by service.
+   - **Preferred:** call the `correlate_by_trace` MCP tool (registered via
+     `.mcp.json`) with `trace_value` (and optionally `service`). It returns
+     typed JSON — no parsing.
+   - **Fallback** (no MCP available):
+     ```
+     python "${CLAUDE_PLUGIN_ROOT}/scripts/correlate_logs.py" \
+       --config <config-path> --value <traceValue> --format json
+     ```
+   Either path returns every matching line across all services, merged
+   chronologically, tagged by service.
 
 4. **Analyze the timeline.**
    - Walk it in order. Note each service hop and the time gaps between them.
@@ -48,6 +52,15 @@ your output is consumed by the main agent.
 
 5. **Report missing coverage.** If any service has no log file, the correlator
    reports it. Surface that — a gap can hide the real cause.
+
+6. **Map the origin to code (code-grounded RCA).** Once you've identified the
+   failing service + class from the log, open the source and quote the exact
+   `file:line` where the failure is raised or surfaced. This is the
+   differentiator: an OSS, repo-aware analogue of Sentry Seer / Datadog Bits —
+   structured RCA that ties logs to *your* source, not a generic suggestion.
+   - Prefer reading the specific method body.
+   - If the cause is cross-service (e.g. a downstream returned 502), dispatch
+     `fleet-explorer` to confirm the call path and cite the proxy-lib hop.
 
 ## Output (return this structure as text)
 
@@ -61,10 +74,22 @@ TIMELINE:
 
 FAILURE ORIGIN: <service> @ <ts>
   <the offending log line(s)>
-PROPAGATION: <how it surfaced upstream>
-LIKELY CAUSE: <one or two sentences>
+  source: <repo/path/File.java:line>
+PROPAGATION: <how it surfaced upstream, each step cited file:line>
 EVIDENCE GAPS: <missing logs / unparsed lines, or "none">
+
+ROOT-CAUSE HYPOTHESIS:
+  WHAT: <one sentence describing the actual fault>
+  WHERE: <repo/path/File.java:line> (the line that needs to change)
+  WHY: <one or two sentences citing the timeline evidence>
+  CONFIDENCE: high | medium | low
+  SUGGESTED FIX: <a concrete, minimal change — code snippet if obvious,
+                 or the specific behavior to alter. Mark as a suggestion,
+                 not a guarantee — the engineer decides.>
+  ALTERNATIVE HYPOTHESES: <other plausible causes the evidence does not rule out>
 ```
 
 Be precise about service names, timestamps, and which line is the origin. Do not
-speculate beyond what the logs support; mark inferences as inferences.
+speculate beyond what the logs support; mark inferences as inferences. The
+ROOT-CAUSE HYPOTHESIS block is required even when CONFIDENCE is low — a stated
+hypothesis the engineer can falsify is more useful than silence.

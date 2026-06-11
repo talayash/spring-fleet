@@ -43,9 +43,12 @@ the whole fleet and ties the failure back to code.
    agent (or use the `tracing-across-services` skill) to confirm the call path.
 
 5. **Report.** State: what the user did, the cross-service timeline, the failure
-   origin (service + `file:line`), how it surfaced upstream, the likely cause,
-   and a concrete fix. Call out any service with **no log file** — a missing log
-   can hide the real cause.
+   origin (service + `file:line`), how it surfaced upstream, and a
+   **ROOT-CAUSE HYPOTHESIS** block — what the fault is, where in code to fix
+   it, why the timeline supports that, your confidence, and a concrete
+   suggested fix (snippet or behavior). Always include alternatives the
+   evidence does not rule out. Call out any service with **no log file** —
+   a missing log can hide the real cause.
 
 ## Fallbacks
 
