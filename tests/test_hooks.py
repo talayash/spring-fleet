@@ -84,5 +84,39 @@ class TestSessionStartHook(unittest.TestCase):
             os.remove(bad)
 
 
+STATUSLINE = os.path.join(REPO_ROOT, "hooks", "statusline.py")
+
+
+def _run_statusline(stdin_text, env_overrides=None, cwd=None):
+    env = os.environ.copy()
+    env.pop("SPRING_FLEET_CONFIG", None)
+    if env_overrides:
+        env.update(env_overrides)
+    return subprocess.run(
+        [sys.executable, STATUSLINE],
+        input=stdin_text, capture_output=True, text=True,
+        env=env, cwd=cwd or REPO_ROOT, timeout=10,
+    )
+
+
+class TestStatusLine(unittest.TestCase):
+    def test_no_config_prints_nothing(self):
+        proc = _run_statusline("{}", cwd=os.path.join(REPO_ROOT, "docs"))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stdout, "")
+
+    def test_with_fixture_config_prints_summary(self):
+        proc = _run_statusline(
+            "{}",
+            env_overrides={"SPRING_FLEET_CONFIG": FLEET_CONFIG},
+            cwd=os.path.join(REPO_ROOT, "docs"),
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("fleet:", proc.stdout)
+        self.assertIn("3 svc", proc.stdout)
+        # Fixture entry is orchestrator.
+        self.assertIn("entry:orchestrator", proc.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

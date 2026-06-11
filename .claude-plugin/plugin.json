@@ -34,5 +34,9 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/statusline.py\""
   }
 }
