@@ -89,6 +89,19 @@
         }
       }
     },
+    "k8s": {
+      "type": "object",
+      "description": "Optional Kubernetes mode. When present, /logs falls back to `kubectl logs` for any service that has no file-based log under logDir. mirrord users can run a single local service against the shared cluster and still get cross-service correlation via this config (the cluster-side services log to stdout, which kubectl reads).",
+      "additionalProperties": true,
+      "properties": {
+        "namespace": { "type": "string", "description": "Kubernetes namespace where the fleet runs." },
+        "context":   { "type": "string", "description": "kubectl context name. Defaults to the active context." },
+        "podSelectorTemplate": {
+          "type": "string",
+          "description": "Label selector template used by `kubectl logs -l <expanded>`. {service} is replaced by the service name. e.g. 'app.kubernetes.io/name={service}'."
+        }
+      }
+    },
     "topology": {
       "type": "object",
       "description": "The request call-chain across services.",
