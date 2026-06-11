@@ -14,7 +14,12 @@ your output is consumed by the main agent.
 
 ## Inputs you receive
 - The path to `spring-fleet.config.json` (services, logDir, traceKeys).
-- A trace value, OR an error snippet to first extract a trace value from.
+- A trace value, OR an error snippet to first extract a trace value from,
+  OR an attached image (a Grafana / Tempo / Jaeger / Kibana panel, an
+  IDE / terminal stack-trace screenshot). When an image is attached,
+  read it directly — Claude is multimodal — and extract the trace_id,
+  sessionId, service name, or timestamp window before correlating.
+  Quote what you extracted so the caller can sanity-check.
 
 ## Procedure
 
