@@ -40,7 +40,7 @@ import tail_logs        # noqa: E402
 
 PROTOCOL_VERSION = "2025-03-26"
 SERVER_NAME = "spring-fleet"
-SERVER_VERSION = "0.2.0"
+SERVER_VERSION = "0.2.0"  # keep in lockstep with .claude-plugin/plugin.json
 
 
 # ---------------------------------------------------------------------------
