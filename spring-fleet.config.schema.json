@@ -60,7 +60,21 @@
           "port": { "type": "integer" },
           "contextPath": { "type": "string" },
           "logFile": { "type": "string", "description": "Log file name within logDir. Defaults to <name>.log." },
-          "role": { "type": "string", "description": "Optional role marker, e.g. 'orchestrator'." }
+          "role": { "type": "string", "description": "Optional role marker, e.g. 'orchestrator'." },
+          "stack": {
+            "type": "object",
+            "description": "Detected stack features for this service. Produced by scan_repos.py at /fleet-init time; consumed by /run, the MCP tools, and agents to branch on what is actually deployed.",
+            "additionalProperties": true,
+            "properties": {
+              "springBootMajor": { "type": ["integer", "null"], "description": "Major Spring Boot version (3 or 4) derived from the build file." },
+              "java": { "type": ["integer", "null"], "description": "Java toolchain version (e.g. 17, 21, 25)." },
+              "virtualThreads": { "type": "boolean", "description": "spring.threads.virtual.enabled=true is set." },
+              "graalNative": { "type": "boolean", "description": "GraalVM native-image plugin is applied (cold-start path)." },
+              "dockerCompose": { "type": "boolean", "description": "A compose.yaml / docker-compose.yaml is present at the repo root (Spring Boot Docker Compose support)." },
+              "testcontainers": { "type": "boolean", "description": "Testcontainers @ServiceConnection or starter is used (modern local dev pattern)." },
+              "opentelemetry": { "type": "boolean", "description": "OpenTelemetry starter or Micrometer Tracing OTel bridge is on the classpath." }
+            }
+          }
         }
       }
     },

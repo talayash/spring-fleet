@@ -85,6 +85,28 @@ BOOT_BUILD_TOKENS = (
     "spring-boot-maven-plugin",   # maven packaging plugin
 )
 
+# Spring Boot plugin/parent version in build files. Matches the
+# common gradle plugins{} form and the maven <parent> form.
+SPRING_BOOT_VERSION_RE = re.compile(
+    r"""
+    (?:                                       # gradle plugin DSL
+        id\s*['"]org\.springframework\.boot['"]
+        \s*version\s*['"](?P<gv>\d+)\.\d+(?:\.\d+)?(?:[-\w.]+)?['"]
+    )
+    |
+    (?:                                       # maven <parent><version>
+        spring-boot-starter-parent.*?<version>\s*(?P<mv>\d+)\.\d+(?:\.\d+)?
+    )
+    """,
+    re.VERBOSE | re.DOTALL,
+)
+
+JAVA_TOOLCHAIN_RE = re.compile(
+    r"JavaLanguageVersion\.of\(\s*(\d+)\s*\)"
+    r"|<java\.version>\s*(\d+)\s*</java\.version>"
+    r"|sourceCompatibility\s*=\s*['\"]?(\d+)"
+)
+
 
 def is_bootable(repo_path):
     """Heuristic: a service has a build file applying the Spring Boot plugin /
@@ -99,6 +121,102 @@ def is_bootable(repo_path):
                 if "@SpringBootApplication" in read_text(os.path.join(root, fn)):
                     return True
     return False
+
+
+def _read_build_files(repo_path):
+    """Concatenate all build file text in the repo (comments stripped)."""
+    parts = []
+    for bf in ("build.gradle", "build.gradle.kts", "pom.xml", "settings.gradle"):
+        parts.append(strip_comments(read_text(os.path.join(repo_path, bf))))
+    return "\n".join(parts)
+
+
+def _read_resource_configs(repo_path):
+    """Concatenate application.properties / application.yml text."""
+    parts = []
+    for root, _dirs, files in os.walk(repo_path):
+        if "resources" not in root.replace("\\", "/"):
+            continue
+        for fn in files:
+            if fn in ("application.properties", "application.yml", "application.yaml"):
+                parts.append(read_text(os.path.join(root, fn)))
+    return "\n".join(parts)
+
+
+def _walk_java_text(repo_path, limit_bytes=2_000_000):
+    """Concatenate src/main + src/test java contents up to a soft byte cap.
+    The cap keeps the scan O(repo) on huge codebases — we only need to detect
+    annotations, not parse code."""
+    parts = []
+    total = 0
+    for root, _dirs, files in os.walk(repo_path):
+        for fn in files:
+            if not fn.endswith(".java"):
+                continue
+            txt = read_text(os.path.join(root, fn))
+            parts.append(txt)
+            total += len(txt)
+            if total >= limit_bytes:
+                return "\n".join(parts)
+    return "\n".join(parts)
+
+
+def detect_stack(repo_path):
+    """Return a dict describing the modern-stack features present in this
+    service repo. Absence is reported as False so downstream tools can branch
+    deterministically on `stack.get("dockerCompose")`."""
+    build = _read_build_files(repo_path)
+    props = _read_resource_configs(repo_path)
+    java_text = _walk_java_text(repo_path)
+
+    boot_major = None
+    m = SPRING_BOOT_VERSION_RE.search(build)
+    if m:
+        boot_major = int(m.group("gv") or m.group("mv"))
+
+    java_version = None
+    jm = JAVA_TOOLCHAIN_RE.search(build)
+    if jm:
+        java_version = int(next(g for g in jm.groups() if g))
+
+    virtual_threads = (
+        "spring.threads.virtual.enabled=true" in props.replace(" ", "")
+        or "spring.threads.virtual.enabled: true" in props.replace(" ", "")
+        or "virtual-threads:" in props
+        and "true" in props.split("virtual-threads:", 1)[1].splitlines()[0]
+    )
+
+    graal_native = (
+        "org.graalvm.buildtools.native" in build
+        or "native-maven-plugin" in build
+    )
+
+    docker_compose = any(
+        os.path.isfile(os.path.join(repo_path, fn))
+        for fn in ("compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml")
+    )
+
+    testcontainers = (
+        "@ServiceConnection" in java_text
+        or "spring-boot-testcontainers" in build
+        or "org.testcontainers" in build
+    )
+
+    opentelemetry = (
+        "spring-boot-starter-opentelemetry" in build
+        or "micrometer-tracing-bridge-otel" in build
+        or "io.opentelemetry" in build
+    )
+
+    return {
+        "springBootMajor": boot_major,
+        "java": java_version,
+        "virtualThreads": bool(virtual_threads),
+        "graalNative": bool(graal_native),
+        "dockerCompose": bool(docker_compose),
+        "testcontainers": bool(testcontainers),
+        "opentelemetry": bool(opentelemetry),
+    }
 
 
 def parse_port_ctx(cfg_name, cfg_text):
@@ -140,6 +258,7 @@ def scan(root, log_dir):
             if ctx is not None:
                 svc["contextPath"] = ctx
             svc["logFile"] = "{}.log".format(name)
+            svc["stack"] = detect_stack(repo_path)
             services.append(svc)
         else:
             shared_libs.append({"name": name, "path": name, "modules": []})

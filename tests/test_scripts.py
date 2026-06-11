@@ -117,6 +117,45 @@ class TestScanRepos(unittest.TestCase):
         self.assertIn("topology", self.draft)
         self.assertEqual(self.draft["topology"]["edges"], [])
 
+    def test_default_trace_keys_lead_with_otel(self):
+        """scan_repos must produce OTel-first trace keys by default so new
+        configs land aligned with Micrometer Observation / OpenTelemetry."""
+        self.assertEqual(self.draft["traceKeys"][:2], ["trace_id", "span_id"])
+
+
+class TestStackDetection(unittest.TestCase):
+    """scan_repos.py learns the modern Spring Boot stack so consumers (MCP
+    tools, /run, agents) can branch on what's actually deployed."""
+
+    def setUp(self):
+        self.root = os.path.join(FIXTURES, "repos")
+        self.draft = scan_repos.scan(self.root, log_dir=None)
+        self.services = {s["name"]: s for s in self.draft["services"]}
+
+    def test_inventory_api_is_detected(self):
+        self.assertIn("inventory-api", self.services)
+
+    def test_inventory_api_stack_is_modern(self):
+        stack = self.services["inventory-api"].get("stack", {})
+        self.assertEqual(stack.get("springBootMajor"), 4)
+        self.assertEqual(stack.get("java"), 21)
+        self.assertTrue(stack.get("virtualThreads"))
+        self.assertTrue(stack.get("graalNative"))
+        self.assertTrue(stack.get("dockerCompose"))
+        self.assertTrue(stack.get("testcontainers"))
+        self.assertTrue(stack.get("opentelemetry"))
+
+    def test_order_api_is_spring_boot_3_baseline(self):
+        stack = self.services["order-api"].get("stack", {})
+        self.assertEqual(stack.get("springBootMajor"), 3)
+        # order-api is the baseline fixture: no compose, no testcontainers,
+        # no virtual threads, no native plugin, no OTel.
+        self.assertFalse(stack.get("dockerCompose"))
+        self.assertFalse(stack.get("testcontainers"))
+        self.assertFalse(stack.get("virtualThreads"))
+        self.assertFalse(stack.get("graalNative"))
+        self.assertFalse(stack.get("opentelemetry"))
+
 
 if __name__ == "__main__":
     unittest.main()
