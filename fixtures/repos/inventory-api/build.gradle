@@ -17,6 +17,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 
+    // Spring AI 1.1 MCP server — exposes @Tool-annotated beans and selected
+    // actuator endpoints as MCP tools so peers (including spring-fleet) can
+    // federate this service's capabilities into a unified tool surface.
+    implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
+
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.testcontainers:postgresql'
 }

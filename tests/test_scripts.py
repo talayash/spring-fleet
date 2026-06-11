@@ -151,6 +151,8 @@ class TestStackDetection(unittest.TestCase):
         self.assertTrue(stack.get("dockerCompose"))
         self.assertTrue(stack.get("testcontainers"))
         self.assertTrue(stack.get("opentelemetry"))
+        self.assertTrue(stack.get("springAiMcpServer"),
+                        "fixture inventory-api ships a Spring AI MCP server starter")
 
     def test_order_api_is_spring_boot_3_baseline(self):
         stack = self.services["order-api"].get("stack", {})

@@ -268,6 +268,11 @@ def detect_stack(repo_path):
         or "io.opentelemetry" in build
     )
 
+    spring_ai_mcp_server = (
+        "spring-ai-starter-mcp-server" in build
+        or "spring-ai-mcp-server" in build
+    )
+
     return {
         "springBootMajor": boot_major,
         "java": java_version,
@@ -276,6 +281,7 @@ def detect_stack(repo_path):
         "dockerCompose": bool(docker_compose),
         "testcontainers": bool(testcontainers),
         "opentelemetry": bool(opentelemetry),
+        "springAiMcpServer": bool(spring_ai_mcp_server),
     }
 
 
