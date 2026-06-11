@@ -85,6 +85,7 @@ class TestSessionStartHook(unittest.TestCase):
 
 
 STATUSLINE = os.path.join(REPO_ROOT, "hooks", "statusline.py")
+SUBAGENT_STOP = os.path.join(REPO_ROOT, "hooks", "subagent_stop.py")
 
 
 def _run_statusline(stdin_text, env_overrides=None, cwd=None):
@@ -97,6 +98,73 @@ def _run_statusline(stdin_text, env_overrides=None, cwd=None):
         input=stdin_text, capture_output=True, text=True,
         env=env, cwd=cwd or REPO_ROOT, timeout=10,
     )
+
+
+def _run_subagent_stop(stdin_text, env_overrides=None, cwd=None):
+    env = os.environ.copy()
+    env.pop("SPRING_FLEET_CONFIG", None)
+    if env_overrides:
+        env.update(env_overrides)
+    return subprocess.run(
+        [sys.executable, SUBAGENT_STOP],
+        input=stdin_text, capture_output=True, text=True,
+        env=env, cwd=cwd or REPO_ROOT, timeout=10,
+    )
+
+
+class TestSubagentStopHook(unittest.TestCase):
+    def setUp(self):
+        # Use a temporary handoff log directory so tests don't pollute fixtures.
+        self.tmpdir = os.path.join(REPO_ROOT, "tests", "_tmp_handoff")
+        os.makedirs(self.tmpdir, exist_ok=True)
+        self.cfg_path = os.path.join(self.tmpdir, "spring-fleet.config.json")
+        with open(self.cfg_path, "w", encoding="utf-8") as fh:
+            json.dump({
+                "reposRoot": self.tmpdir, "buildTool": {"type": "gradle"},
+                "logDir": self.tmpdir, "services": [{"name": "x", "path": "x"}],
+            }, fh)
+        self.handoff = os.path.join(self.tmpdir, ".spring-fleet-handoff.log")
+        if os.path.isfile(self.handoff):
+            os.remove(self.handoff)
+
+    def tearDown(self):
+        for fn in (".spring-fleet-handoff.log", "spring-fleet.config.json"):
+            p = os.path.join(self.tmpdir, fn)
+            if os.path.isfile(p):
+                os.remove(p)
+        if os.path.isdir(self.tmpdir):
+            os.rmdir(self.tmpdir)
+
+    def test_our_agent_output_is_appended(self):
+        payload = json.dumps({
+            "subagent_name": "log-correlator",
+            "output": "TRACE VALUE: abc\nFAILURE ORIGIN: payment\n",
+        })
+        proc = _run_subagent_stop(
+            payload,
+            env_overrides={"SPRING_FLEET_CONFIG": self.cfg_path},
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(os.path.isfile(self.handoff))
+        with open(self.handoff, "r", encoding="utf-8") as fh:
+            body = fh.read()
+        self.assertIn("log-correlator", body)
+        self.assertIn("FAILURE ORIGIN: payment", body)
+
+    def test_foreign_agent_is_ignored(self):
+        payload = json.dumps({"subagent_name": "some-other-agent", "output": "noise"})
+        proc = _run_subagent_stop(
+            payload,
+            env_overrides={"SPRING_FLEET_CONFIG": self.cfg_path},
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertFalse(os.path.isfile(self.handoff),
+                         "handoff log must not exist for non-fleet subagents")
+
+    def test_no_config_is_noop(self):
+        payload = json.dumps({"subagent_name": "log-correlator", "output": "x"})
+        proc = _run_subagent_stop(payload, cwd=os.path.join(REPO_ROOT, "docs"))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
 
 
 class TestStatusLine(unittest.TestCase):
