@@ -23,10 +23,13 @@ your output is consumed by the main agent.
    `traceKeys`. If it is missing, say so and stop — the user must run `/fleet-init`.
 
 2. **Get a trace value.**
-   - If given one, use it.
-   - If given an error snippet, grep the logs for a nearby line and extract the
-     first `traceKeys` value (e.g. `sessionId=...`). If none is present, fall
-     back to correlating by timestamp window + endpoint, and say so explicitly.
+   - If given one, use it. Prefer the OTel `trace_id` (32-char lowercase hex)
+     when both it and a legacy `sessionId` are available — it is framework-
+     propagated and reliable across hops.
+   - If given an error snippet, grep the logs for a nearby line and extract a
+     `traceKeys` value (try `trace_id=...` first, then `sessionId=...`,
+     `requestId=...`). If none is present, fall back to correlating by
+     timestamp window + endpoint, and say so explicitly.
 
 3. **Run the correlator** (deterministic, do not hand-grep when this works):
    ```

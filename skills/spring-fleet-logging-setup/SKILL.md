@@ -1,14 +1,26 @@
 ---
 name: spring-fleet-logging-setup
-description: Use when fleet logs are console-only or scattered and cross-service correlation needs a stable location - installs a logback convention so every service writes <logDir>/<service>.log with trace keys (sessionId etc.) in the pattern.
+description: Use when fleet logs are console-only or scattered and cross-service correlation needs a stable location - installs a logback convention so every service writes <logDir>/<service>.log with OTel trace_id / span_id and legacy sessionId / requestId in the pattern.
 ---
 
 # Fleet Logging Setup (logback convention)
 
 Cross-service log correlation needs two things: every service writing to one
-known directory, and trace keys (`sessionId`, `requestId`, …) present in each
-line. This skill installs a logback convention that guarantees both. It is
-idempotent and opt-in per service.
+known directory, and trace keys (`trace_id`, `span_id`, `sessionId`, …) present
+in each line. This skill installs a logback convention that guarantees both. It
+is idempotent and opt-in per service.
+
+## What trace keys to use (2026)
+
+- **Primary: OpenTelemetry / Micrometer Observation.** Add the
+  `spring-boot-starter-actuator` + `micrometer-tracing-bridge-otel` (or, on
+  Spring Boot 4, the dedicated `spring-boot-starter-opentelemetry`). The W3C
+  `traceparent` header is auto-propagated across HTTP/gRPC, and the
+  Observation API automatically populates MDC keys `trace_id` (32-char hex)
+  and `span_id` (16-char hex). These are the modern, framework-default keys.
+- **Fallback / legacy: sessionId, requestId.** Keep them in the pattern for
+  fleets that pre-date the Observation API or that propagate an application-
+  level session id (auth, X-Request-Id) the user wants to correlate on.
 
 ## When to use
 
@@ -29,11 +41,18 @@ idempotent and opt-in per service.
    - `SPRING_FLEET_LOG_DIR` → the config `logDir`, or set that env var when
      launching the service.
 
-3. **Ensure the trace keys are in MDC.** A pattern can only print `%X{sessionId}`
-   if something put `sessionId` into the MDC. Confirm the service has a filter/
-   interceptor that reads the incoming header (or generates the id) and calls
-   `MDC.put(...)`, clearing it in a `finally`. If propagation across services is
-   missing, the same id must be forwarded as a header on outbound proxy-lib calls.
+3. **Ensure the trace keys are in MDC.** A pattern can only print `%X{trace_id}`
+   if something put `trace_id` into the MDC.
+   - **trace_id / span_id**: come for free once Micrometer Tracing or the OTel
+     starter is on the classpath — Spring Boot wires the Observation API which
+     populates MDC automatically. Verify by hitting any endpoint and tailing the
+     log; the keys should already be there.
+   - **sessionId / requestId (legacy)**: usually require a filter/interceptor
+     that reads the incoming header (or generates the id), calls `MDC.put(...)`,
+     and clears it in a `finally`. If propagation across services is missing,
+     the same id must be forwarded as a header on outbound proxy-lib calls.
+     (Modern fleets should rely on W3C `traceparent` instead and treat
+     sessionId as a business id, not a correlation id.)
 
 4. **Verify.** Run the service, exercise one request, then:
    ```

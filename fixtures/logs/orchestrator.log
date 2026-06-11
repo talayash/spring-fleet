@@ -1,5 +1,5 @@
-2026-06-09 14:23:01.100 [http-nio-8080-exec-1] INFO  [sessionId=ABC123 requestId=r-1] c.f.OrchestratorController - received reserve request
-2026-06-09 14:23:01.180 [http-nio-8080-exec-1] INFO  [sessionId=ABC123 requestId=r-1] c.f.OrchestratorService - calling order-api
-2026-06-09 14:23:01.500 [http-nio-8080-exec-1] INFO  [sessionId=ABC123 requestId=r-1] c.f.OrchestratorService - calling payment-api
-2026-06-09 14:23:02.350 [http-nio-8080-exec-1] ERROR [sessionId=ABC123 requestId=r-1] c.f.OrchestratorService - payment-api returned 502, aborting reserve
-2026-06-09 14:23:05.000 [http-nio-8080-exec-2] INFO  [sessionId=ZZZ999 requestId=r-9] c.f.OrchestratorController - received reserve request
+2026-06-09 14:23:01.100 [http-nio-8080-exec-1] INFO  [trace_id=4bf92f3577b34da6a3ce929d0e0e4736 span_id=a3ce929d0e0e4736 sessionId=ABC123 requestId=r-1] c.f.OrchestratorController - received reserve request
+2026-06-09 14:23:01.180 [http-nio-8080-exec-1] INFO  [trace_id=4bf92f3577b34da6a3ce929d0e0e4736 span_id=a3ce929d0e0e4736 sessionId=ABC123 requestId=r-1] c.f.OrchestratorService - calling order-api
+2026-06-09 14:23:01.500 [http-nio-8080-exec-1] INFO  [trace_id=4bf92f3577b34da6a3ce929d0e0e4736 span_id=a3ce929d0e0e4736 sessionId=ABC123 requestId=r-1] c.f.OrchestratorService - calling payment-api
+2026-06-09 14:23:02.350 [http-nio-8080-exec-1] ERROR [trace_id=4bf92f3577b34da6a3ce929d0e0e4736 span_id=a3ce929d0e0e4736 sessionId=ABC123 requestId=r-1] c.f.OrchestratorService - payment-api returned 502, aborting reserve
+2026-06-09 14:23:05.000 [http-nio-8080-exec-2] INFO  [trace_id=00112233445566778899aabbccddeeff span_id=0011223344556677 sessionId=ZZZ999 requestId=r-9] c.f.OrchestratorController - received reserve request

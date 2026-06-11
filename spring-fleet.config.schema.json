@@ -30,7 +30,7 @@
     "traceKeys": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "MDC keys that propagate across services and identify a single request/session (e.g. sessionId, requestId, traceId). Used to correlate logs. Order matters: the first key is the default correlation key."
+      "description": "MDC keys that propagate across services and identify a single request/session. Order matters: the first key is the default correlation key. Recommended (2026): ['trace_id','span_id','sessionId','requestId'] — trace_id/span_id are the Micrometer Observation / OpenTelemetry conventions (W3C traceparent, 32-hex / 16-hex lowercase), and sessionId/requestId are kept as legacy fallback."
     },
     "proxyLib": {
       "type": "string",

@@ -17,9 +17,11 @@ the whole fleet and ties the failure back to code.
 
 ## Procedure
 
-1. **Get a correlation handle.** Best case: a trace value the user already has
-   (a `sessionId` from a failed request, an `X-Request-Id` header). Otherwise,
-   start from the error message/stack the user pasted.
+1. **Get a correlation handle.** Best case: an OTel `trace_id` (32-char hex)
+   from the user's APM dashboard or a `traceparent` header, or a legacy
+   `sessionId` / `X-Request-Id` from a failed request. Otherwise, start from
+   the error message/stack the user pasted — extract a key from a nearby log
+   line, preferring `trace_id` over `sessionId`.
 
 2. **Dispatch the `log-correlator` agent** with the config path and the trace
    value (or error snippet). It runs `scripts/correlate_logs.py` and returns one

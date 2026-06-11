@@ -8,7 +8,7 @@
     "test": "test"
   },
   "logDir": "/path/to/your/repos/.spring-fleet-logs",
-  "traceKeys": ["sessionId", "requestId"],
+  "traceKeys": ["trace_id", "span_id", "sessionId", "requestId"],
   "proxyLib": "api-proxy-lib",
   "sharedLibs": [
     {

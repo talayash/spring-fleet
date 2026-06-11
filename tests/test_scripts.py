@@ -75,6 +75,23 @@ class TestCorrelate(unittest.TestCase):
         self.assertTrue(line.startswith(records[0]["ts"] + " "))
         self.assertIn("[orchestrator]", line)
 
+    def test_correlates_by_w3c_trace_id(self):
+        """OTel W3C trace_id is a 32-char lowercase hex string and is the
+        modern primary correlation key (Micrometer Observation MDC). The same
+        trace_id must appear on every service participating in the request."""
+        trace_id = "4bf92f3577b34da6a3ce929d0e0e4736"
+        records, missing = correlate_logs.correlate(self.cfg, trace_id)
+        self.assertEqual(missing, [])
+        services = {r["service"] for r in records}
+        self.assertEqual(services, {"orchestrator", "order", "payment"})
+
+    def test_each_service_has_distinct_span_id(self):
+        """Each service hop gets its own 16-hex span_id under a shared trace_id.
+        Correlating on a service-specific span_id must return only that service."""
+        records, _ = correlate_logs.correlate(self.cfg, "00f067aa0ba902b7")
+        self.assertTrue(records, "expected payment-only span lines")
+        self.assertEqual({r["service"] for r in records}, {"payment"})
+
 
 class TestScanRepos(unittest.TestCase):
     def setUp(self):

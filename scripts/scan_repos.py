@@ -148,7 +148,7 @@ def scan(root, log_dir):
         "reposRoot": root,
         "buildTool": detect_default_build_tool(services, root),
         "logDir": log_dir or os.path.join(root, ".spring-fleet-logs"),
-        "traceKeys": ["sessionId"],
+        "traceKeys": ["trace_id", "span_id", "sessionId", "requestId"],
         "sharedLibs": shared_libs,
         "services": services,
         "topology": {"entry": [], "edges": []},
