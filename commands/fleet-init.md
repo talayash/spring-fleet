@@ -16,9 +16,15 @@ Steps:
    python "${CLAUDE_PLUGIN_ROOT}/scripts/scan_repos.py" --root <reposRoot>
    ```
    It detects build tool, services vs shared libs, ports, and context paths.
-3. The draft cannot infer two things mechanically — ask the user to confirm:
-   - **traceKeys**: which MDC keys identify a request/session (e.g. `sessionId`).
-   - **topology**: the entry services and the `[from, to]` call edges.
+3. The draft pre-fills `traceKeys` with the modern OTel-first default
+   (`trace_id`, `span_id`, `sessionId`, `requestId`) and seeds `topology`
+   from any Backstage `catalog-info.yaml` files it finds at repo roots
+   (each `dependsOn: component:*` becomes a `[from, to]` edge; components
+   with no inbound dependency become entries). Ask the user to confirm:
+   - **traceKeys**: which MDC keys actually identify a request/session in
+     their fleet (drop entries that are never emitted).
+   - **topology**: confirm or amend the Backstage-derived entries and edges;
+     for fleets without Backstage, fill these in manually.
    Pre-fill from any existing `spring-fleet.config.json` if present.
 4. Validate the result against `${CLAUDE_PLUGIN_ROOT}/spring-fleet.config.schema.json`
    (required fields, types).

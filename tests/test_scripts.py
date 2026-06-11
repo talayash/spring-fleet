@@ -113,9 +113,16 @@ class TestScanRepos(unittest.TestCase):
     def test_build_tool_is_gradle(self):
         self.assertEqual(self.draft["buildTool"]["type"], "gradle")
 
-    def test_draft_includes_placeholder_topology(self):
+    def test_draft_includes_topology_shape(self):
+        """The draft always has a topology object with entry + edges arrays.
+        Edges may be empty (no Backstage catalog files present) or populated
+        (Backstage catalog-info.yaml dependsOn was ingested) — either is
+        fine here; the dedicated TestBackstageIngestion tests cover content."""
         self.assertIn("topology", self.draft)
-        self.assertEqual(self.draft["topology"]["edges"], [])
+        self.assertIn("entry", self.draft["topology"])
+        self.assertIn("edges", self.draft["topology"])
+        self.assertIsInstance(self.draft["topology"]["entry"], list)
+        self.assertIsInstance(self.draft["topology"]["edges"], list)
 
     def test_default_trace_keys_lead_with_otel(self):
         """scan_repos must produce OTel-first trace keys by default so new
@@ -155,6 +162,36 @@ class TestStackDetection(unittest.TestCase):
         self.assertFalse(stack.get("virtualThreads"))
         self.assertFalse(stack.get("graalNative"))
         self.assertFalse(stack.get("opentelemetry"))
+
+
+class TestBackstageIngestion(unittest.TestCase):
+    """Backstage's catalog-info.yaml dominates the 2026 service-catalog space.
+    Ingesting it gives scan_repos a free source of ownership + dependencies."""
+
+    def setUp(self):
+        self.root = os.path.join(FIXTURES, "repos")
+        self.draft = scan_repos.scan(self.root, log_dir=None)
+        self.services = {s["name"]: s for s in self.draft["services"]}
+
+    def test_catalog_owner_and_system_lifted_into_service(self):
+        inv = self.services["inventory-api"]
+        self.assertEqual(inv.get("backstage", {}).get("owner"), "team-fleet")
+        self.assertEqual(inv.get("backstage", {}).get("system"), "fleet-platform")
+        self.assertEqual(inv.get("backstage", {}).get("lifecycle"), "production")
+
+    def test_depends_on_components_become_topology_edges(self):
+        """A `dependsOn: component:order-api` in inventory's catalog becomes
+        an edge inventory-api -> order-api in the topology draft."""
+        edges = self.draft["topology"]["edges"]
+        self.assertIn(["inventory-api", "order-api"], edges)
+
+    def test_components_become_topology_entries_when_no_inbound_edges(self):
+        """A component with no inbound `dependsOn:component:` reference is a
+        topology entry candidate. inventory-api has no inbound, so it should
+        be in entry; order-api has an inbound from inventory and should not."""
+        entries = self.draft["topology"]["entry"]
+        self.assertIn("inventory-api", entries)
+        self.assertNotIn("order-api", entries)
 
 
 if __name__ == "__main__":

@@ -61,6 +61,17 @@
           "contextPath": { "type": "string" },
           "logFile": { "type": "string", "description": "Log file name within logDir. Defaults to <name>.log." },
           "role": { "type": "string", "description": "Optional role marker, e.g. 'orchestrator'." },
+          "backstage": {
+            "type": "object",
+            "description": "Lifted from a Backstage catalog-info.yaml at the repo root, when present. Provides ownership and lifecycle metadata; `dependsOn: component:*` entries are folded into topology.edges by scan_repos.py.",
+            "additionalProperties": true,
+            "properties": {
+              "owner":     { "type": "string" },
+              "system":    { "type": "string" },
+              "lifecycle": { "type": "string" },
+              "type":      { "type": "string" }
+            }
+          },
           "stack": {
             "type": "object",
             "description": "Detected stack features for this service. Produced by scan_repos.py at /fleet-init time; consumed by /run, the MCP tools, and agents to branch on what is actually deployed.",
