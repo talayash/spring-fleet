@@ -8,7 +8,7 @@ lines across all selected logs.
 K8s fallback: if a service's file log is missing and the config has a `k8s`
 block, this script can shell out to `kubectl logs` for that service. Enable
 with --k8s or by setting the env var SPRING_FLEET_K8S=1. mirrord users get
-this automatically — services running in-cluster log to stdout, and kubectl
+this automatically: services running in-cluster log to stdout, and kubectl
 reads them.
 
 Dependency-free (Python 3 stdlib only). Cross-platform.

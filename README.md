@@ -24,8 +24,8 @@ repos, you know the pain:
 - A bug report says "session ABC123 broke" → whose logs?
 - You're refactoring a shared lib → who actually uses this class?
 
-spring-fleet teaches Claude your fleet's shape — repos, ports, services, who
-calls whom — and gives you a few commands that handle the cross-repo legwork
+spring-fleet teaches Claude your fleet's shape (repos, ports, services, who
+calls whom) and gives you a few commands that handle the cross-repo legwork
 for you.
 
 ---
@@ -35,11 +35,11 @@ for you.
 | You ask | spring-fleet does |
 |---|---|
 | **"Where does this request go?"** | Follows the call chain across every repo and proxy-lib, with `file:line` citations at every hop. |
-| **"Why did this break?"** | Merges every service's logs into one timeline by trace key, finds the failing hop, and explains the root cause — with a suggested fix and the exact file to edit. |
+| **"Why did this break?"** | Merges every service's logs into one timeline by trace key, finds the failing hop, and explains the root cause, with a suggested fix and the exact file to edit. |
 | **"What breaks if I change this?"** | Lists every consumer of a shared class, file, or endpoint across the fleet, flagged by risk. |
 | **"How do I start the fleet locally?"** | Plans (or runs) `docker compose up` or `bootRun` per service, with logs landing where the debugger can find them. |
 
-You stay in Claude Code — no new dashboard, no agent to deploy, no SaaS account.
+You stay in Claude Code. No new dashboard, no agent to deploy, no SaaS account.
 
 ---
 
@@ -67,7 +67,7 @@ You'll see something like:
 ```
 
 One trace key, three services' logs interleaved chronologically, the failing
-hop visible. That's what `/debug` does in Claude Code — plus a "here's the
+hop visible. That's what `/debug` does in Claude Code, plus a "here's the
 root cause and where to fix it" writeup at the end.
 
 <p align="center">
@@ -115,12 +115,12 @@ This scans every repo under that directory and writes a draft config
   Spring AI MCP server
 - Backstage `catalog-info.yaml` files (used to seed topology)
 
-Two things it **can't** infer mechanically — Claude will ask you:
+Two things it **can't** infer mechanically, so Claude will ask you:
 
-- **`traceKeys`** — which MDC keys identify a request in your logs.
+- **`traceKeys`**: which MDC keys identify a request in your logs.
   Modern fleets: keep the defaults (`trace_id`, `span_id`).
   Legacy fleets: add your own (`sessionId`, `requestId`, etc.).
-- **`topology`** — who calls whom. If you have Backstage catalogs,
+- **`topology`**: who calls whom. If you have Backstage catalogs,
   most of this is filled in for you.
 
 > 🔒 **`spring-fleet.config.json` is `.gitignore`d by default.** It contains
@@ -162,11 +162,11 @@ writes `<logDir>/<service>.log` with trace keys in the pattern.
 | `/trace` | `/trace POST /order-v1/reserve` | Ordered call chain across repos, with `file:line` for every hop. |
 | `/debug` | `/debug <trace_id\|sessionId\|"error"\|screenshot>` | Cross-service log timeline + a root-cause hypothesis (what / where in code / why / suggested fix / alternatives). |
 | `/impact` | `/impact OrderEntity` | Every consumer across the fleet, classified by call kind and contract risk. |
-| `/run` | `/run [service] [--execute]` | Plans (or launches) the local fleet — `docker compose up` first, `bootRun` / `mvn spring-boot:run` as fallback. |
+| `/run` | `/run [service] [--execute]` | Plans (or launches) the local fleet: `docker compose up` first, `bootRun` / `mvn spring-boot:run` as fallback. |
 | `/logs` | `/logs payment --grep ERROR --follow` | Tail / aggregate logs. `--k8s` falls back to `kubectl logs` (mirrord-friendly). |
 
 Each command also runs deterministic Python scripts under the hood
-(`correlate_logs.py`, `scan_repos.py`, `tail_logs.py`, `run_fleet.py`) — you
+(`correlate_logs.py`, `scan_repos.py`, `tail_logs.py`, `run_fleet.py`), so you
 can call them directly without Claude if you want.
 
 ---
@@ -174,7 +174,7 @@ can call them directly without Claude if you want.
 ## How it works
 
 ```
-spring-fleet (this plugin — generic, shareable)        your machine (private)
+spring-fleet (this plugin: generic, shareable)        your machine (private)
 ├── commands/        /fleet-init /trace /debug          spring-fleet.config.json
 │                    /impact /run /logs                   ├─ reposRoot
 ├── agents/          fleet-explorer · log-correlator      ├─ logDir, traceKeys
@@ -189,7 +189,7 @@ spring-fleet (this plugin — generic, shareable)        your machine (private)
 └── logback/         drop-in logging convention
 ```
 
-The plugin is **generic and shareable** — it has zero knowledge of your
+The plugin is **generic and shareable**: it has zero knowledge of your
 specific repos. Everything environment-specific lives in your local
 `spring-fleet.config.json`, which is git-ignored.
 
@@ -217,7 +217,7 @@ call from any MCP-aware client:
 
 The server speaks JSON-RPC 2.0 over stdio. `.mcp.json` registers it
 automatically with Claude Code. Fleets whose services ship their own
-Spring AI MCP server (Spring AI 1.1+) can federate them alongside —
+Spring AI MCP server (Spring AI 1.1+) can federate them alongside;
 see the `federating-mcp-servers` skill.
 
 ---
@@ -232,11 +232,11 @@ lives in `spring-fleet.config.schema.json`. Most-used fields:
 |---|---|
 | `reposRoot` | The directory under which all your service + lib repos live. |
 | `services[]` | Each service: `{ name, path, port, contextPath, logFile, stack, backstage }`. |
-| `sharedLibs[]`, `proxyLib` | Cross-repo libraries — used by `/trace` and `/impact`. |
+| `sharedLibs[]`, `proxyLib` | Cross-repo libraries, used by `/trace` and `/impact`. |
 | `topology` | `entry` services + `[from, to]` call edges. Seeded from Backstage when available. |
 | `traceKeys` | MDC keys for log correlation. Defaults: `["trace_id", "span_id", "sessionId", "requestId"]`. |
 | `logDir` | Where per-service logs land. `/debug` and `/logs` read from here. |
-| `k8s` *(optional)* | `{ namespace, context, podSelectorTemplate }` — enables `kubectl logs` fallback. |
+| `k8s` *(optional)* | `{ namespace, context, podSelectorTemplate }`: enables `kubectl logs` fallback. |
 
 ---
 
@@ -244,7 +244,7 @@ lives in `spring-fleet.config.schema.json`. Most-used fields:
 
 **Do I need OpenTelemetry?**
 No. spring-fleet works with whatever MDC keys your services already emit
-(`sessionId`, `requestId`, your own). If you do have OTel — great, `trace_id`
+(`sessionId`, `requestId`, your own). If you do have OTel, great: `trace_id`
 is the default correlation key.
 
 **Does it work with Spring Boot 3?**
@@ -254,7 +254,7 @@ records the major version per service so commands can branch on it.
 **Does it support Maven?**
 Yes. `buildTool.type` is `gradle` or `maven`; `/run` and the templates adapt.
 
-**My services run in Kubernetes — does this still work?**
+**My services run in Kubernetes. Does this still work?**
 Yes. Add a `k8s` block to your config and pass `--k8s` to `/logs` (or set
 `SPRING_FLEET_K8S=1`). spring-fleet shells out to `kubectl logs` when a
 file-based log is missing. Works great with [mirrord](https://mirrord.dev/).
@@ -302,14 +302,14 @@ python -m unittest discover -s tests -v
 dependencies, runs on Python 3.8+. CI executes on Linux / Windows / macOS
 against Python 3.8 and 3.12 (see `.github/workflows/ci.yml`).
 
-Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
 ## Roadmap
 
 - **Streamable HTTP** transport for the MCP server (currently stdio-only).
-- **`/incident`** — bundles `/debug` + `/impact` into a postmortem-style writeup.
+- **`/incident`**: bundles `/debug` + `/impact` into a postmortem-style writeup.
 - **GitHub PR comment integration** (Vercel Agent / Sentry Seer style).
 
 See [CHANGELOG.md](CHANGELOG.md) for what shipped when.

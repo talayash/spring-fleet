@@ -27,7 +27,7 @@ which leans on shared libraries. This skill reconstructs that chain.
 
 3. **Read the chain critically.** Confirm each hop's downstream target matches
    the topology. Where a hop is dynamic (reflection, event bus, conditional
-   routing), the explorer marks it — resolve it by reading the dispatch site
+   routing), the explorer marks it; resolve it by reading the dispatch site
    rather than guessing.
 
 4. **Present the result.** Give the ordered chain entry → … → leaf, each step
@@ -37,7 +37,7 @@ which leans on shared libraries. This skill reconstructs that chain.
 
 ## Tips
 
-- The `proxyLib` is the seam between services — grep it for the client class to
+- The `proxyLib` is the seam between services; grep it for the client class to
   find who calls whom when the topology is unclear.
 - Contract changes ripple through the `proxyLib`: if a hop's request/response
   shape changes, the generated client (and every caller) is affected.

@@ -44,7 +44,7 @@ is idempotent and opt-in per service.
 3. **Ensure the trace keys are in MDC.** A pattern can only print `%X{trace_id}`
    if something put `trace_id` into the MDC.
    - **trace_id / span_id**: come for free once Micrometer Tracing or the OTel
-     starter is on the classpath — Spring Boot wires the Observation API which
+     starter is on the classpath; Spring Boot wires the Observation API which
      populates MDC automatically. Verify by hitting any endpoint and tailing the
      log; the keys should already be there.
    - **sessionId / requestId (legacy)**: usually require a filter/interceptor

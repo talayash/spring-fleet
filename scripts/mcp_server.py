@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
-"""spring-fleet MCP server — exposes the deterministic fleet operations as
+"""spring-fleet MCP server: exposes the deterministic fleet operations as
 typed tools so Claude (and any MCP-aware client) can call them without
 parsing CLI output.
 
 Transport: stdio (newline-delimited JSON-RPC 2.0).
-Protocol:  MCP 2025-03-26 subset — initialize / tools/list / tools/call / ping.
+Protocol:  MCP 2025-03-26 subset: initialize / tools/list / tools/call / ping.
 
 Tools exposed:
-    list_services          — services + ports + stack + sharedLibs
-    get_topology           — entry services + [from,to] edges
-    correlate_by_trace     — cross-service timeline for a trace value
-    tail_service_log       — last N lines of one service log (optional grep)
-    scan_repos_root        — generate a draft config from a repos directory
-    find_service_log_path  — resolve a service name to its absolute log path
+    list_services          - services + ports + stack + sharedLibs
+    get_topology           - entry services + [from,to] edges
+    correlate_by_trace     - cross-service timeline for a trace value
+    tail_service_log       - last N lines of one service log (optional grep)
+    scan_repos_root        - generate a draft config from a repos directory
+    find_service_log_path  - resolve a service name to its absolute log path
 
 Config resolution (in order):
     1. SPRING_FLEET_CONFIG env var (absolute path)
     2. <cwd>/spring-fleet.config.json
 
 If the config is required by a tool and missing, the tool returns a
-structured error in the MCP CallToolResult — the server does not crash.
+structured error in the MCP CallToolResult; the server does not crash.
 
 Dependency-free (Python 3 stdlib only). Cross-platform.
 """
@@ -74,7 +74,7 @@ def _require_config():
 
 
 # ---------------------------------------------------------------------------
-# Tool implementations — each returns a JSON-serializable structure that we
+# Tool implementations - each returns a JSON-serializable structure that we
 # wrap in MCP CallToolResult content blocks.
 # ---------------------------------------------------------------------------
 
@@ -177,7 +177,7 @@ def tool_find_service_log_path(args):
 
 
 # ---------------------------------------------------------------------------
-# Tool registry — surface as JSON Schema so MCP clients (Claude included) can
+# Tool registry - surface as JSON Schema so MCP clients (Claude included) can
 # call them with typed arguments.
 # ---------------------------------------------------------------------------
 
@@ -255,7 +255,7 @@ TOOLS = [
             "Scan a directory of repos and return a draft spring-fleet "
             "config (services vs shared libs, ports, context paths, "
             "detected stack). The draft cannot infer traceKeys or "
-            "topology mechanically — the caller must confirm those."
+            "topology mechanically; the caller must confirm those."
         ),
         "inputSchema": {
             "type": "object",
@@ -335,7 +335,7 @@ def handle(message):
             return _error(req_id, -32601, "unknown tool: {}".format(name))
         try:
             data = tool["impl"](args)
-        except Exception as exc:  # noqa: BLE001 — exposed back to the model
+        except Exception as exc:  # noqa: BLE001 - exposed back to the model
             return _result(req_id, {
                 "isError": True,
                 "content": [{"type": "text", "text": "tool '{}' raised {}: {}".format(

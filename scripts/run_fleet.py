@@ -60,7 +60,7 @@ def plan_service(svc, config):
             "command": ["docker", "compose", "up", "-d"],
             "logPath": log_path,
             "tee": False,
-            "note": "Service ships a compose.yaml — `docker compose logs -f` for output.",
+            "note": "Service ships a compose.yaml; use `docker compose logs -f` for output.",
         }
 
     build_tool = (config.get("buildTool") or {}).get("type", "gradle")
@@ -99,7 +99,7 @@ def execute(plan):
     """Spawn each planned command as a background process, tee'ing stdout to
     logPath when requested. Returns a list of (service, pid, log_path, mode)
     tuples. Caller is responsible for stopping the processes (this script
-    intentionally does not babysit — the caller's editor will."""
+    intentionally does not babysit; the caller's editor will."""
     started = []
     for step in plan:
         _ensure_log_dir(step["logPath"])

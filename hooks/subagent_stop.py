@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SubagentStop hook — persists fleet-explorer / log-correlator output to a
+"""SubagentStop hook: persists fleet-explorer / log-correlator output to a
 shared handoff log so the main agent can refer back without re-running the
 subagent or relying on cleared context.
 
@@ -33,7 +33,7 @@ def _config_path(hook_input):
 
 def _handoff_log_path(hook_input):
     """Resolve <logDir>/.spring-fleet-handoff.log without crashing if logDir
-    is missing — we'd rather no-op than block the agent loop."""
+    is missing; we'd rather no-op than block the agent loop."""
     cfg_path = _config_path(hook_input)
     if not cfg_path:
         return None
@@ -62,7 +62,7 @@ def main():
     name = (payload.get("subagent_name") or payload.get("subagentName")
             or payload.get("agent") or "")
     if name not in OUR_AGENTS:
-        # Not our agent — silently no-op.
+        # Not our agent; silently no-op.
         print("{}")
         return 0
 

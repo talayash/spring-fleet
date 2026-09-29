@@ -1,12 +1,12 @@
 ---
-description: Tail or aggregate logs from the fleet's services — file-based when present, kubectl-based when the config has a k8s block (for mirrord / in-cluster runs).
+description: Tail or aggregate logs from the fleet's services: file-based when present, kubectl-based when the config has a k8s block (for mirrord / in-cluster runs).
 argument-hint: [service|all] [--grep TEXT] [--lines N] [--follow] [--k8s]
 allowed-tools: Bash, Read
 ---
 
 Show fleet logs.
 
-Input: `$ARGUMENTS` — optional service name (default: all), plus optional
+Input: `$ARGUMENTS`: optional service name (default: all), plus optional
 `--grep`, `--lines`, `--follow`, `--k8s`.
 
 Steps:

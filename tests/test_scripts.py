@@ -116,7 +116,7 @@ class TestScanRepos(unittest.TestCase):
     def test_draft_includes_topology_shape(self):
         """The draft always has a topology object with entry + edges arrays.
         Edges may be empty (no Backstage catalog files present) or populated
-        (Backstage catalog-info.yaml dependsOn was ingested) — either is
+        (Backstage catalog-info.yaml dependsOn was ingested); either is
         fine here; the dedicated TestBackstageIngestion tests cover content."""
         self.assertIn("topology", self.draft)
         self.assertIn("entry", self.draft["topology"])

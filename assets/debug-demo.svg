@@ -18,7 +18,7 @@
   <circle cx="26" cy="20" r="6" fill="#ff5f56"/>
   <circle cx="48" cy="20" r="6" fill="#ffbd2e"/>
   <circle cx="70" cy="20" r="6" fill="#27c93f"/>
-  <text x="470" y="25" text-anchor="middle" font-size="13" fill="#94a3b8">spring-fleet — Claude Code</text>
+  <text x="470" y="25" text-anchor="middle" font-size="13" fill="#94a3b8">spring-fleet - Claude Code</text>
 
   <g class="t">
     <text x="24" y="74"><tspan class="prompt">&gt; </tspan><tspan class="fg">/debug ABC123</tspan></text>
@@ -40,7 +40,7 @@
     <text x="24" y="392"><tspan class="dim">14:23:02.350</tspan> <tspan class="svc">[orchestrator]</tspan> <tspan class="warnlbl">ERROR</tspan> <tspan class="fg">payment-api returned 502, aborting</tspan></text>
 
     <text x="24" y="430"><tspan class="err">FAILURE ORIGIN:</tspan> <tspan class="fg">payment @ 14:23:02.200</tspan></text>
-    <text x="44" y="452" class="dim">PaymentGatewayClient.java:48 — upstream gateway timeout after 600ms</text>
+    <text x="44" y="452" class="dim">PaymentGatewayClient.java:48 - upstream gateway timeout after 600ms</text>
     <text x="24" y="480"><tspan class="hdr">PROPAGATION:</tspan> <tspan class="fg">payment → 502 → orchestrator aborts reserve</tspan></text>
     <text x="24" y="508"><tspan class="hdr">LIKELY CAUSE:</tspan> <tspan class="fg">gateway exceeded the 600ms client timeout; not a logic bug in</tspan></text>
     <text x="24" y="530" class="fg">              the orchestrator. Raise the timeout or add a retry/circuit-breaker.</text>

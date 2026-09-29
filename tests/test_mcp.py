@@ -28,7 +28,7 @@ FLEET_CONFIG = os.path.join(FIXTURES, "fleet.config.json")
 
 
 def _call_tool(name, args, env_overrides=None):
-    """Direct in-process dispatch — sets SPRING_FLEET_CONFIG, restores after."""
+    """Direct in-process dispatch, sets SPRING_FLEET_CONFIG, restores after."""
     original = os.environ.get("SPRING_FLEET_CONFIG")
     if env_overrides:
         os.environ.update(env_overrides)
@@ -163,7 +163,7 @@ class TestTools(unittest.TestCase):
 
 
 class TestStdioFraming(unittest.TestCase):
-    """Subprocess round-trip — confirms newline-delimited JSON-RPC."""
+    """Subprocess round-trip, confirms newline-delimited JSON-RPC."""
 
     def test_initialize_then_tools_list(self):
         env = os.environ.copy()
