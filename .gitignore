@@ -1,4 +1,4 @@
-# Never commit a real environment config — it contains private paths, ports,
+# Never commit a real environment config: it contains private paths, ports,
 # service names, and trace keys. Use spring-fleet.config.example.json instead.
 spring-fleet.config.json
 

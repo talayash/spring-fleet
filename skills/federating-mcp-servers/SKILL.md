@@ -8,7 +8,7 @@ description: Use when a fleet service ships its own Spring AI MCP server - expla
 Spring AI 1.1 ships `spring-ai-starter-mcp-server-{webmvc,webflux,servlet}`,
 so any Spring Boot service in the fleet can expose `@Tool`-annotated beans
 (and selected actuator endpoints) as MCP tools. When that happens, the
-right move is not to re-implement those tools inside spring-fleet — it is to
+right move is not to re-implement those tools inside spring-fleet; it is to
 **federate** them: register each service's MCP server alongside the
 spring-fleet MCP server so Claude sees one unified tool surface across the
 whole fleet.
@@ -45,7 +45,7 @@ signal.
    readable and collisions with non-fleet MCP servers are unlikely.
 
 3. **Confirm with the user before editing `.mcp.json`.** Federation changes
-   the agent's effective tool surface and the data it can read — that's a
+   the agent's effective tool surface and the data it can read; that's a
    shared-state change worth a quick confirmation. Show the proposed diff.
 
 4. **Verify reachable.** After registration, ask Claude to list MCP tools
@@ -63,7 +63,7 @@ signal.
   serve when those services are running. spring-fleet's own MCP server
   always works regardless of fleet runtime state.
 - Authentication is per-service. If the team uses an OIDC-protected MCP
-  endpoint, the `.mcp.json` entry needs an `Authorization` header — store
+  endpoint, the `.mcp.json` entry needs an `Authorization` header; store
   the token in the user's secret manager and reference it through
   environment variables, never inline.
 - Tool name collisions across federated servers are resolved by the MCP

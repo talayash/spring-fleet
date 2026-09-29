@@ -28,7 +28,7 @@ ordered call chain with exact `file:line` citations.
 
 3. **Follow the chain, hop by hop.** At each service:
    - Identify the service → service calls. These usually go through the
-     `proxyLib` (generated clients) — grep for the client class/method.
+     `proxyLib` (generated clients); grep for the client class/method.
    - Use `topology.edges` to know which downstream service a call targets, then
      continue the trace in that repo.
    - Note where shared-lib code (entities, data, orderflow, util) is invoked, and

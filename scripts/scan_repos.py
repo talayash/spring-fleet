@@ -145,7 +145,7 @@ def _read_resource_configs(repo_path):
 
 def _walk_java_text(repo_path, limit_bytes=2_000_000):
     """Concatenate src/main + src/test java contents up to a soft byte cap.
-    The cap keeps the scan O(repo) on huge codebases — we only need to detect
+    The cap keeps the scan O(repo) on huge codebases; we only need to detect
     annotations, not parse code."""
     parts = []
     total = 0
@@ -166,7 +166,7 @@ def parse_catalog_info(repo_path):
     Returns a dict with `name`, `owner`, `system`, `lifecycle`, and a list of
     `dependsOnComponents` (the component names this component depends on),
     or None if no catalog file exists. Does a minimal line-oriented parse so
-    we keep zero non-stdlib dependencies — only handles the flat fields and
+    we keep zero non-stdlib dependencies, so it only handles the flat fields and
     the dependsOn list that catalog files actually use in practice."""
     for fn in ("catalog-info.yaml", "catalog-info.yml"):
         path = os.path.join(repo_path, fn)

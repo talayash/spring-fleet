@@ -6,7 +6,7 @@ Thanks for your interest! spring-fleet aims to stay **generic and dependency-fre
 
 - **Never commit a real `spring-fleet.config.json`.** It contains private paths,
   ports, and service names. Only `spring-fleet.config.example.json` (fake values)
-  belongs in the repo. The real config is `.gitignore`d — keep it that way.
+  belongs in the repo. The real config is `.gitignore`d; keep it that way.
 - **No company- or fleet-specific names** in plugin code, skills, commands, or
   fixtures. Use generic placeholders (`order-api`, `core-lib`, `${logDir}`,
   `<sessionId>`).
@@ -17,7 +17,7 @@ Thanks for your interest! spring-fleet aims to stay **generic and dependency-fre
 
 ```
 .claude-plugin/   plugin + marketplace manifests
-commands/         slash commands (thin — delegate to skills/agents/scripts)
+commands/         slash commands (thin; delegate to skills/agents/scripts)
 skills/           reusable know-how (one folder per skill, SKILL.md inside)
 agents/           subagents (fleet-explorer, log-correlator)
 scripts/          deterministic Python (correlate_logs, scan_repos, tail_logs)

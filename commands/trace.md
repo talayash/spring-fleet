@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Grep, Glob, Task
 
 Trace a flow across the Spring Boot fleet.
 
-Input: `$ARGUMENTS` — an endpoint (`POST /order-v1/reserve`), a controller, or a
+Input: `$ARGUMENTS`: an endpoint (`POST /order-v1/reserve`), a controller, or a
 feature name.
 
 Steps:

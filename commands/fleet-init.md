@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob
 
 Initialize or refresh the fleet config.
 
-Input: `$ARGUMENTS` — optional repos root path. If omitted, ask the user (or use
+Input: `$ARGUMENTS`: optional repos root path. If omitted, ask the user (or use
 an existing config's `reposRoot`).
 
 Steps:

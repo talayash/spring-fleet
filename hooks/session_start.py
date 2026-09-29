@@ -13,7 +13,7 @@ Resolution order for the config:
     2. <cwd>/spring-fleet.config.json
     3. <hook_input.workspace_root>/spring-fleet.config.json
 
-If no config is found, the hook prints an empty JSON object and exits 0 — it
+If no config is found, the hook prints an empty JSON object and exits 0; it
 must never block a session.
 
 Dependency-free (Python 3 stdlib only).

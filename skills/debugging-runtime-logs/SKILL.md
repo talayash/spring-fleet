@@ -20,7 +20,7 @@ the whole fleet and ties the failure back to code.
 1. **Get a correlation handle.** Best case: an OTel `trace_id` (32-char hex)
    from the user's APM dashboard or a `traceparent` header, or a legacy
    `sessionId` / `X-Request-Id` from a failed request. Otherwise, start from
-   the error message/stack the user pasted — extract a key from a nearby log
+   the error message/stack the user pasted; extract a key from a nearby log
    line, preferring `trace_id` over `sessionId`.
 
 2. **Dispatch the `log-correlator` agent** with the config path and the trace
@@ -35,7 +35,7 @@ the whole fleet and ties the failure back to code.
 
 3. **Read the timeline as a story.** Follow the request hop by hop. The first
    ERROR/exception in time order is the likely origin; everything after it is
-   usually propagation. Watch the time gaps — a long gap before an error often
+   usually propagation. Watch the time gaps: a long gap before an error often
    means a timeout.
 
 4. **Map the origin to code.** Take the failing service + class from the log and
@@ -44,10 +44,10 @@ the whole fleet and ties the failure back to code.
 
 5. **Report.** State: what the user did, the cross-service timeline, the failure
    origin (service + `file:line`), how it surfaced upstream, and a
-   **ROOT-CAUSE HYPOTHESIS** block — what the fault is, where in code to fix
+   **ROOT-CAUSE HYPOTHESIS** block: what the fault is, where in code to fix
    it, why the timeline supports that, your confidence, and a concrete
    suggested fix (snippet or behavior). Always include alternatives the
-   evidence does not rule out. Call out any service with **no log file** —
+   evidence does not rule out. Call out any service with **no log file**;
    a missing log can hide the real cause.
 
 ## Fallbacks
