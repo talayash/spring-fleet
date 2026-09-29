@@ -161,6 +161,56 @@ class TestSubagentStopHook(unittest.TestCase):
         self.assertFalse(os.path.isfile(self.handoff),
                          "handoff log must not exist for non-fleet subagents")
 
+    def _handoff_body(self, payload):
+        proc = _run_subagent_stop(
+            json.dumps(payload),
+            env_overrides={"SPRING_FLEET_CONFIG": self.cfg_path},
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        if not os.path.isfile(self.handoff):
+            return None
+        with open(self.handoff, "r", encoding="utf-8") as fh:
+            return fh.read()
+
+    def test_agent_type_payload_is_appended(self):
+        """Current Claude Code and Codex both send agent_type plus
+        last_assistant_message rather than subagent_name/output."""
+        body = self._handoff_body({
+            "hook_event_name": "SubagentStop",
+            "agent_type": "fleet-explorer",
+            "last_assistant_message": "CHAIN: order -> payment",
+            "transcript_path": "/nonexistent/parent-session.jsonl",
+        })
+        self.assertIsNotNone(body)
+        self.assertIn("fleet-explorer", body)
+        self.assertIn("CHAIN: order -> payment", body)
+
+    def test_plugin_namespaced_agent_type_is_ours(self):
+        body = self._handoff_body({"agent_type": "spring-fleet:impact-analyzer",
+                                   "last_assistant_message": "3 consumers"})
+        self.assertIsNotNone(body)
+        self.assertIn("impact-analyzer", body)
+        self.assertIn("3 consumers", body)
+
+    def test_agent_transcript_is_used_not_parent_transcript(self):
+        """transcript_path is the parent session; only the agent's own
+        transcript describes what the subagent did."""
+        agent_tx = os.path.join(self.tmpdir, "agent.jsonl")
+        parent_tx = os.path.join(self.tmpdir, "parent.jsonl")
+        with open(agent_tx, "w", encoding="utf-8") as fh:
+            fh.write("agent says hi\n")
+        with open(parent_tx, "w", encoding="utf-8") as fh:
+            fh.write("PARENT SESSION\n")
+        try:
+            body = self._handoff_body({"agent_type": "log-correlator",
+                                       "agent_transcript_path": agent_tx,
+                                       "transcript_path": parent_tx})
+        finally:
+            os.remove(agent_tx)
+            os.remove(parent_tx)
+        self.assertIn("agent says hi", body)
+        self.assertNotIn("PARENT SESSION", body)
+
     def test_no_config_is_noop(self):
         payload = json.dumps({"subagent_name": "log-correlator", "output": "x"})
         proc = _run_subagent_stop(payload, cwd=os.path.join(REPO_ROOT, "docs"))

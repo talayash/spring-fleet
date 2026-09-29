@@ -1,4 +1,5 @@
 ---
+name: trace
 description: Trace how an endpoint or feature flows across the fleet's service repos and shared libraries, with file:line citations.
 argument-hint: <endpoint | controller | feature>
 allowed-tools: Bash, Read, Grep, Glob, Task
@@ -17,3 +18,8 @@ Steps:
    noting shared-lib code touched.
 4. Present the chain entry → … → leaf, each step cited `repo/File.java:line`,
    plus a short summary of participating services and shared-lib modules.
+
+## Outside Claude Code
+
+- `$ARGUMENTS` is the text the user supplied with the request.
+- No plugin subagents (Codex): read `agents/fleet-explorer.md` under the plugin root (two directories above this SKILL.md) and do that work yourself instead of dispatching.

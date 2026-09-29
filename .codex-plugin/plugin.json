@@ -1,0 +1,29 @@
+{
+  "name": "spring-fleet",
+  "version": "0.2.0",
+  "description": "OpenTelemetry-native, MCP-first debugging layer for multi-repo Spring Boot microservice fleets. Cross-repo call-chain tracing, trace_id-correlated log timelines with code-grounded root-cause hypothesis, and a stdlib MCP server exposing fleet operations as typed tools.",
+  "author": {
+    "name": "Tal Ayash",
+    "url": "https://github.com/talayash"
+  },
+  "homepage": "https://github.com/talayash/spring-fleet",
+  "repository": "https://github.com/talayash/spring-fleet",
+  "license": "MIT",
+  "keywords": [
+    "spring-boot",
+    "microservices",
+    "java",
+    "debugging",
+    "tracing",
+    "monorepo",
+    "multi-repo",
+    "observability",
+    "opentelemetry",
+    "mcp",
+    "spring-ai",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.codex-plugin/mcp.json",
+  "hooks": "./.codex-plugin/hooks.json"
+}

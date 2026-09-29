@@ -57,3 +57,9 @@ the whole fleet and ties the failure back to code.
   stable per-service log files (or, later, the `/run` tee command).
 - **Empty result:** the value may be wrong, or the request never reached the
   fleet. Widen with `/logs --grep` around the timeframe.
+
+## Outside Claude Code
+
+- `${CLAUDE_PLUGIN_ROOT}` is the spring-fleet plugin root. Claude Code fills it in; in Codex it is the folder two directories above this SKILL.md.
+- No plugin subagents (Codex): read `agents/log-correlator.md` and `agents/fleet-explorer.md` under the plugin root and do that work yourself.
+- spring-fleet MCP tools: pass `config_path` (absolute path of the project's `spring-fleet.config.json`). Codex starts the server outside the project, so it cannot find the config on its own.

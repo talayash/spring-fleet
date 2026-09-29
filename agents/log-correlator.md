@@ -38,15 +38,22 @@ your output is consumed by the main agent.
 
 3. **Run the correlator** (deterministic, do not hand-grep when this works):
    - **Preferred:** call the `correlate_by_trace` MCP tool (registered via
-     `.mcp.json`) with `trace_value` (and optionally `service`). It returns
-     typed JSON, no parsing.
-   - **Fallback** (no MCP available):
+     `.mcp.json`) with `trace_value`, `match: "exact"` (and optionally
+     `service` or a specific `key`). It returns
+     typed JSON, no parsing. Also pass `config_path` (the config's absolute
+     path); it is required when the server runs outside the project (Codex).
+   - **Fallback** (no MCP available; `${CLAUDE_PLUGIN_ROOT}` is the folder
+     above `agents/`):
      ```
      python "${CLAUDE_PLUGIN_ROOT}/scripts/correlate_logs.py" \
-       --config <config-path> --value <traceValue> --format json
+       --config <config-path> --value <traceValue> --match exact --format json
      ```
-   Either path returns every matching line across all services, merged
-   chronologically, tagged by service.
+   Events include multiline stack traces and are sorted by UTC time, tagged
+   by service. For error-snippet searches, use `match: "substring"` or omit
+   `--match exact`. Timestamp-free events sort last; timestamps without an
+   offset assume UTC, so call out uncertainty when services use local time.
+   Check MCP `truncated` and `totalCount`: narrow by service, increase
+   `max_records` (maximum 1000), or use the CLI for the full timeline.
 
 4. **Analyze the timeline.**
    - Walk it in order. Note each service hop and the time gaps between them.

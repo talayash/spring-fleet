@@ -12,7 +12,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An `/incident` command bundling `/debug` + `/impact` for postmortem-style writeups.
 - Optional GitHub PR comment integration (Vercel Agent / Sentry Seer style).
 
-## [0.2.0] - 2026-06-11
+## [0.2.0] - 2026-09-29
+
+### Added - Codex support and diagnostics
+- Codex support: `.codex-plugin/plugin.json` with a Codex-specific MCP and
+  SessionStart hook config. Install with
+  `codex plugin marketplace add talayash/spring-fleet`.
+- MCP tools accept an optional `config_path`, which takes precedence over
+  `SPRING_FLEET_CONFIG` and the working directory (required under Codex).
+- `/doctor`, a standalone diagnostic CLI and MCP tool for config validation,
+  missing repositories/logs, duplicate ports, topology references and missing
+  executables, with actionable fixes and machine-readable findings.
+- Exact trace-key matching (`--match exact` / `--key`), JSON log events
+  (ECS, Logstash and GELF field layouts), UTC timestamp ordering with nanosecond
+  precision, and multiline stack-trace grouping with source line ranges.
+
+### Changed - workflows are skills
+- Slash commands moved from `commands/` to `skills/<name>/SKILL.md`. Claude
+  Code still exposes them as `/spring-fleet:<name>`; Codex as `$<name>`.
+  `run` is explicit-only in both.
+
+### Fixed - hardening
+- The SubagentStop handoff hook reads `agent_type` / `last_assistant_message`
+  / `agent_transcript_path` (sent by current Claude Code and Codex) and
+  accepts plugin-namespaced agent names; it previously only matched the
+  legacy `subagent_name` / `output` fields.
+- MCP rejects malformed envelopes and invalid tool arguments without ending
+  the stdio session, handles request batches, and never executes notifications.
+- MCP log output is bounded with explicit truncation metadata; oversized tool
+  payloads return an actionable error. Explicit config paths no longer silently
+  fall back to a different config.
+- Log tailing retains only the requested number of lines in memory.
 
 ### Added - MCP-first, OTel-native, AI-era
 - **MCP server** (`scripts/mcp_server.py`, pure stdlib JSON-RPC over stdio) exposing six typed tools: `list_services`, `get_topology`, `correlate_by_trace`, `tail_service_log`, `scan_repos_root`, `find_service_log_path`. Wired via `.mcp.json`.
@@ -40,9 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Schema gains `services[].stack`, `services[].backstage`, top-level `k8s`.
 
 ### Tests
-- 48 tests, up from 11. Covers MCP protocol + every tool, both hooks, the run planner, OTel/legacy correlation, stack detection, Backstage ingestion, status line.
-
-## [0.1.1] - 2026-06-09
+- 93 tests, up from 11. Covers MCP protocol + every tool, both hooks, the run planner, OTel/legacy correlation, stack detection, Backstage ingestion, status line.
 
 ## [0.1.1] - 2026-06-09
 

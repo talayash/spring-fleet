@@ -1,0 +1,3 @@
+# Codex: `run` launches processes, so only run it when explicitly invoked ($run).
+policy:
+  allow_implicit_invocation: false

@@ -26,6 +26,7 @@ import json
 import os
 import sys
 import time
+from collections import deque
 
 
 def load_config(path):
@@ -49,7 +50,7 @@ def tail_lines(path, n):
     if not os.path.isfile(path):
         return []
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
-        return fh.readlines()[-n:]
+        return list(deque(fh, maxlen=n))
 
 
 def matches(line, grep):
