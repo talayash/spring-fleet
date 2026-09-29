@@ -1,4 +1,5 @@
 ---
+name: logs
 description: Tail or aggregate logs from the fleet's services: file-based when present, kubectl-based when the config has a k8s block (for mirrord / in-cluster runs).
 argument-hint: [service|all] [--grep TEXT] [--lines N] [--follow] [--k8s]
 allowed-tools: Bash, Read
@@ -25,3 +26,9 @@ Steps:
      them.
 3. Present the tagged, aggregated output (`[service/k8s]` for kubectl-sourced
    lines). For `--follow`, stream until interrupted.
+
+## Outside Claude Code
+
+- `${CLAUDE_PLUGIN_ROOT}` is the spring-fleet plugin root. Claude Code fills it in; in Codex it is the folder two directories above this SKILL.md.
+- `$ARGUMENTS` is the text the user supplied with the request.
+- spring-fleet MCP tools: pass `config_path` (absolute path of the project's `spring-fleet.config.json`). Codex starts the server outside the project, so it cannot find the config on its own.

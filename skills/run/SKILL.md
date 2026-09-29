@@ -1,7 +1,9 @@
 ---
+name: run
 description: Plan or launch the fleet locally: compose-first per service, with stdout tee'd to logDir so /debug can read it later.
 argument-hint: [service|all] [--execute]
 allowed-tools: Bash, Read
+disable-model-invocation: true
 ---
 
 Plan or launch the Spring Boot fleet locally.
@@ -35,3 +37,9 @@ Steps:
    `docker compose down` for compose-managed services).
 5. After launch, suggest `/logs --follow` (or `tail_service_log` MCP tool)
    to confirm services are healthy.
+
+## Outside Claude Code
+
+- `${CLAUDE_PLUGIN_ROOT}` is the spring-fleet plugin root. Claude Code fills it in; in Codex it is the folder two directories above this SKILL.md.
+- `$ARGUMENTS` is the text the user supplied with the request.
+- spring-fleet MCP tools: pass `config_path` (absolute path of the project's `spring-fleet.config.json`). Codex starts the server outside the project, so it cannot find the config on its own.

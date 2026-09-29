@@ -16,9 +16,11 @@ Thanks for your interest! spring-fleet aims to stay **generic and dependency-fre
 ## Project layout
 
 ```
-.claude-plugin/   plugin + marketplace manifests
-commands/         slash commands (thin; delegate to skills/agents/scripts)
-skills/           reusable know-how (one folder per skill, SKILL.md inside)
+.claude-plugin/   plugin + marketplace manifests (Codex reads the marketplace too)
+.codex-plugin/    Codex manifest plus its MCP and hook config
+skills/           workflows (/debug, /trace, ...) and reusable know-how; one
+                  folder per skill, SKILL.md inside. Workflows are skills, not
+                  commands, so they also work in Codex.
 agents/           subagents (fleet-explorer, log-correlator)
 scripts/          deterministic Python (correlate_logs, scan_repos, tail_logs)
 logback/          logging convention template

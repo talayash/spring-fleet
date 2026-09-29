@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/Python-3.8%2B-3776ab.svg?logo=python&logoColor=white" alt="Python 3.8+"/>
   <img src="https://img.shields.io/badge/MCP-server%20included-7c3aed.svg" alt="MCP server included"/>
   <img src="https://img.shields.io/badge/Claude%20Code-plugin-d97757.svg" alt="Claude Code plugin"/>
-  <img src="https://img.shields.io/badge/tests-48%20passing-brightgreen.svg" alt="Tests"/>
+  <img src="https://img.shields.io/badge/tests-76%20passing-brightgreen.svg" alt="Tests"/>
 </p>
 
 # spring-fleet
@@ -95,6 +95,30 @@ You need [Claude Code](https://claude.com/claude-code) and Python 3.8+.
 > Already installed but seeing a stale version?
 > `/plugin marketplace update spring-fleet`.
 
+### Codex
+
+The same repo is also a [Codex](https://developers.openai.com/codex) plugin
+(`.codex-plugin/plugin.json`):
+
+```text
+codex plugin marketplace add talayash/spring-fleet
+codex plugin add spring-fleet@spring-fleet
+```
+
+Start a new Codex session and approve the plugin's SessionStart hook when
+Codex asks you to review it. Workflows are skills, so type `$debug`,
+`$trace`, `$fleet-init` and so on instead of `/debug`. What differs from
+Claude Code:
+
+- **No subagents or output style.** The skills tell Codex to follow the
+  `agents/*.md` playbooks itself; `fleet-narrator` and the status line are
+  Claude Code only.
+- **MCP tools take `config_path`.** Codex starts the plugin's MCP server in
+  the plugin directory, not your project, so the skills pass the config's
+  absolute path. Setting `SPRING_FLEET_CONFIG` also works.
+- **`$run` is explicit-only.** It launches processes, so Codex never picks it
+  on its own.
+
 ---
 
 ## First use (5 minutes)
@@ -138,6 +162,7 @@ Two things it **can't** infer mechanically, so Claude will ask you:
 /impact core-lib/util/RetryPolicy.java
 /run                                          # plan the fleet launch
 /run --execute                                # actually start it
+/doctor                                       # diagnose config and local prerequisites
 /logs payment --grep ERROR --follow
 ```
 
@@ -159,6 +184,7 @@ writes `<logDir>/<service>.log` with trace keys in the pattern.
 | Command | What you type | What you get |
 |---|---|---|
 | `/fleet-init` | `/fleet-init [path/to/repos]` | Draft config from your repos. Run once per project. |
+| `/doctor` | `/doctor [--config PATH]` | Read-only checks of config, repositories, logs, duplicate ports, topology and required executables, with suggested fixes. |
 | `/trace` | `/trace POST /order-v1/reserve` | Ordered call chain across repos, with `file:line` for every hop. |
 | `/debug` | `/debug <trace_id\|sessionId\|"error"\|screenshot>` | Cross-service log timeline + a root-cause hypothesis (what / where in code / why / suggested fix / alternatives). |
 | `/impact` | `/impact OrderEntity` | Every consumer across the fleet, classified by call kind and contract risk. |
@@ -175,12 +201,13 @@ can call them directly without Claude if you want.
 
 ```
 spring-fleet (this plugin: generic, shareable)        your machine (private)
-├── commands/        /fleet-init /trace /debug          spring-fleet.config.json
-│                    /impact /run /logs                   ├─ reposRoot
-├── agents/          fleet-explorer · log-correlator      ├─ logDir, traceKeys
-│                    impact-analyzer                      ├─ services[] (name, port, path, stack)
-├── skills/          tracing · debugging · logging-setup  ├─ sharedLibs[], proxyLib
-│                    federating-mcp-servers               └─ topology (entry, edges)
+├── skills/          /fleet-init /trace /debug          spring-fleet.config.json
+│                    /impact /run /logs /doctor           ├─ reposRoot
+│                    tracing · debugging · logging-setup  ├─ logDir, traceKeys
+│                    federating-mcp-servers               ├─ services[] (name, port, path, stack)
+├── agents/          fleet-explorer · log-correlator      ├─ sharedLibs[], proxyLib
+│                    impact-analyzer                      └─ topology (entry, edges)
+├── .codex-plugin/   Codex manifest, MCP + hook config
 ├── hooks/           SessionStart · SubagentStop ·
 │                    statusLine
 ├── scripts/         deterministic Python (stdlib only)
@@ -196,7 +223,7 @@ specific repos. Everything environment-specific lives in your local
 When you start a Claude Code session in a project with that config, the
 **SessionStart hook** preloads your fleet topology so Claude doesn't need
 to re-read it each turn. The **MCP server** (`scripts/mcp_server.py`)
-exposes six typed tools so Claude calls them deterministically instead of
+exposes seven typed tools so Claude calls them deterministically instead of
 parsing CLI output.
 
 ---
@@ -208,6 +235,7 @@ call from any MCP-aware client:
 
 | Tool | Purpose |
 |---|---|
+| `doctor` | Read-only fleet diagnostics, with errors, warnings and suggested fixes |
 | `list_services` | Services + ports + detected stack + shared libs |
 | `get_topology` | Entry services and `[from, to]` edges |
 | `correlate_by_trace` | Cross-service timeline for a trace value |
@@ -219,6 +247,53 @@ The server speaks JSON-RPC 2.0 over stdio. `.mcp.json` registers it
 automatically with Claude Code. Fleets whose services ship their own
 Spring AI MCP server (Spring AI 1.1+) can federate them alongside;
 see the `federating-mcp-servers` skill.
+
+### Accurate log correlation
+
+The CLI preserves substring search by default, including error snippets.
+Use exact matching when you have a trace identifier:
+
+```bash
+python scripts/correlate_logs.py --config fixtures/fleet.config.json --value ABC123 --match exact
+python scripts/correlate_logs.py --config fixtures/fleet.config.json --value ABC123 --key sessionId --format json
+```
+
+`--match exact` searches the configured `traceKeys`; `--key` selects one key
+and implies exact matching. Text `key=value` / `key: value` fields and JSON
+fields are supported, including nested MDC, dotted ECS fields and GELF-prefixed
+fields. Configure the actual key names used in your logs (for example `traceId`
+or `trace.id`). JSON events must occupy one physical line, with embedded stack
+traces escaped inside their string fields.
+
+Events sort by parsed UTC time, preserving nanoseconds. ISO timestamps with
+offsets and numeric GELF epoch seconds are supported. **Timestamps without an
+offset assume UTC**; use explicit offsets when services log in different timezones.
+Invalid or missing timestamps sort last in source order. Text stack-trace
+continuations stay with the preceding event. JSON results include `lineNo`,
+`endLineNo` and `timestampUtc` (epoch seconds as a string, or null).
+
+The `correlate_by_trace` MCP tool accepts `match`, `key` and `max_records`.
+It returns the earliest 200 events by default (maximum 1000), with `count`,
+`totalCount` and `truncated`. Individual log records are limited to 8000
+characters and marked `lineTruncated` when shortened. `tail_service_log` allows
+up to 1000 lines per service and marks shortened lines with `[truncated]`.
+Serialized tool payloads above 100000 characters return an actionable error.
+Narrow the request or use the CLI for complete output.
+
+### Check your local setup
+
+```bash
+python scripts/doctor.py --config spring-fleet.config.json
+python scripts/doctor.py --config spring-fleet.config.json --format json
+```
+
+Doctor checks the project schema, repository paths, log files, service names,
+port conflicts, topology references and executables needed by the current
+launch plan. Missing logs are warnings because services may not have started.
+Exit code 0 means no errors; 1 means errors were found. It does not start
+processes, install tools, probe ports or verify Docker/cluster connectivity.
+Relative config paths use the current working directory, matching the existing
+scripts. The MCP `doctor` tool uses the server's configured fleet file.
 
 ---
 
@@ -297,8 +372,8 @@ Same timeline, modern key.
 python -m unittest discover -s tests -v
 ```
 
-48 tests across `tests/test_scripts.py`, `tests/test_mcp.py`,
-`tests/test_hooks.py`, `tests/test_run_fleet.py`. No network, no third-party
+76 tests across `tests/test_scripts.py`, `tests/test_mcp.py`,
+`tests/test_hooks.py`, `tests/test_run_fleet.py`, `tests/test_upgrades.py`. No network, no third-party
 dependencies, runs on Python 3.8+. CI executes on Linux / Windows / macOS
 against Python 3.8 and 3.12 (see `.github/workflows/ci.yml`).
 

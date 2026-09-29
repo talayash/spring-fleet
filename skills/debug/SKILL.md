@@ -1,4 +1,5 @@
 ---
+name: debug
 description: Debug a runtime failure across the fleet by correlating logs on an OTel trace_id / sessionId / requestId, or by reading a pasted Grafana / stack-trace screenshot, and mapping the failure back to source.
 argument-hint: <trace_id | sessionId | "error snippet" | (or paste a screenshot)>
 allowed-tools: Bash, Read, Grep, Glob, Task
@@ -32,3 +33,9 @@ Steps:
    how it surfaced upstream, the **ROOT-CAUSE HYPOTHESIS** block from the
    log-correlator (WHAT / WHERE / WHY / CONFIDENCE / SUGGESTED FIX), and any
    service missing a log file.
+
+## Outside Claude Code
+
+- `$ARGUMENTS` is the text the user supplied with the request.
+- No plugin subagents (Codex): read `agents/log-correlator.md` and `agents/fleet-explorer.md` under the plugin root (two directories above this SKILL.md) and do that work yourself instead of dispatching.
+- spring-fleet MCP tools: pass `config_path` (absolute path of the project's `spring-fleet.config.json`). Codex starts the server outside the project, so it cannot find the config on its own.

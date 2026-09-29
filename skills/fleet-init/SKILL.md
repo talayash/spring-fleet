@@ -1,4 +1,5 @@
 ---
+name: fleet-init
 description: Scan a repos directory and generate (or update) spring-fleet.config.json for the fleet.
 argument-hint: [reposRoot]
 allowed-tools: Bash, Read, Write, Edit, Glob
@@ -32,3 +33,8 @@ Steps:
    `.gitignore`d and must never be committed.
 6. If logs are console-only or scattered, suggest the **spring-fleet-logging-setup**
    skill so `/debug` has stable per-service logs.
+
+## Outside Claude Code
+
+- `${CLAUDE_PLUGIN_ROOT}` is the spring-fleet plugin root. Claude Code fills it in; in Codex it is the folder two directories above this SKILL.md.
+- `$ARGUMENTS` is the text the user supplied with the request.

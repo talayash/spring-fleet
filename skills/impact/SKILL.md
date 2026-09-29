@@ -1,4 +1,5 @@
 ---
+name: impact
 description: Find every consumer of a shared-lib symbol, file, or API across the fleet's service repos. Outputs an impact list with file:line citations.
 argument-hint: <symbol | file | endpoint>
 allowed-tools: Bash, Read, Grep, Glob, Task
@@ -25,3 +26,8 @@ Steps:
    service that calls the symbol in a hot path (controller, scheduler,
    event handler) and any consumer that touches a public API or persisted
    data shape; those carry the highest change cost.
+
+## Outside Claude Code
+
+- `$ARGUMENTS` is the text the user supplied with the request.
+- No plugin subagents (Codex): read `agents/impact-analyzer.md` under the plugin root (two directories above this SKILL.md) and do that work yourself instead of dispatching.

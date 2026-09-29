@@ -7,6 +7,7 @@ Transport: stdio (newline-delimited JSON-RPC 2.0).
 Protocol:  MCP 2025-03-26 subset: initialize / tools/list / tools/call / ping.
 
 Tools exposed:
+    doctor                 - read-only fleet diagnostics and suggested fixes
     list_services          - services + ports + stack + sharedLibs
     get_topology           - entry services + [from,to] edges
     correlate_by_trace     - cross-service timeline for a trace value
@@ -15,8 +16,10 @@ Tools exposed:
     find_service_log_path  - resolve a service name to its absolute log path
 
 Config resolution (in order):
-    1. SPRING_FLEET_CONFIG env var (absolute path)
-    2. <cwd>/spring-fleet.config.json
+    1. `config_path` tool argument (absolute path). Codex starts plugin MCP
+       servers in the plugin directory, not the project, so it must pass this.
+    2. SPRING_FLEET_CONFIG env var (absolute path)
+    3. <cwd>/spring-fleet.config.json
 
 If the config is required by a tool and missing, the tool returns a
 structured error in the MCP CallToolResult; the server does not crash.
@@ -37,19 +40,26 @@ if SCRIPTS_DIR not in sys.path:
 import correlate_logs   # noqa: E402  same dir
 import scan_repos       # noqa: E402
 import tail_logs        # noqa: E402
+import doctor           # noqa: E402
+from validation import validate  # noqa: E402
 
 PROTOCOL_VERSION = "2025-03-26"
 SERVER_NAME = "spring-fleet"
 SERVER_VERSION = "0.2.0"  # keep in lockstep with .claude-plugin/plugin.json
+MAX_OUTPUT_CHARS = 100000
+MAX_LOG_CHARS = 8000
 
 
 # ---------------------------------------------------------------------------
 # Config discovery
 # ---------------------------------------------------------------------------
 
-def _config_path():
+def _config_path(args=None):
+    explicit = (args or {}).get("config_path")
+    if explicit:
+        return explicit
     env = os.environ.get("SPRING_FLEET_CONFIG")
-    if env and os.path.isfile(env):
+    if env:
         return env
     cwd_cfg = os.path.join(os.getcwd(), "spring-fleet.config.json")
     if os.path.isfile(cwd_cfg):
@@ -57,18 +67,24 @@ def _config_path():
     return None
 
 
-def _require_config():
+def _require_config(args=None):
     """Return (config, None) on success, (None, error_text) on failure."""
-    path = _config_path()
+    path = _config_path(args)
     if path is None:
         return None, (
-            "No spring-fleet config found. Set SPRING_FLEET_CONFIG to its "
-            "absolute path, or run /fleet-init to generate one in the "
+            "No spring-fleet config found. Pass config_path (the absolute "
+            "path of the project's spring-fleet.config.json), set "
+            "SPRING_FLEET_CONFIG, or run /fleet-init to generate one in the "
             "current working directory."
         )
     try:
         with open(path, "r", encoding="utf-8") as fh:
-            return json.load(fh), None
+            config = json.load(fh)
+        with open(doctor.SCHEMA_PATH, encoding="utf-8") as fh:
+            errors = validate(config, json.load(fh))
+        if errors:
+            return None, "Invalid config: " + "; ".join(errors)
+        return config, None
     except (OSError, json.JSONDecodeError) as exc:
         return None, "Failed to read {}: {}".format(path, exc)
 
@@ -78,8 +94,8 @@ def _require_config():
 # wrap in MCP CallToolResult content blocks.
 # ---------------------------------------------------------------------------
 
-def tool_list_services(_args):
-    cfg, err = _require_config()
+def tool_list_services(args):
+    cfg, err = _require_config(args)
     if err:
         return {"error": err}
     return {
@@ -92,8 +108,8 @@ def tool_list_services(_args):
     }
 
 
-def tool_get_topology(_args):
-    cfg, err = _require_config()
+def tool_get_topology(args):
+    cfg, err = _require_config(args)
     if err:
         return {"error": err}
     topology = cfg.get("topology", {}) or {}
@@ -105,24 +121,33 @@ def tool_get_topology(_args):
 
 
 def tool_correlate_by_trace(args):
-    cfg, err = _require_config()
+    cfg, err = _require_config(args)
     if err:
         return {"error": err}
     value = (args or {}).get("trace_value")
     if not value:
         return {"error": "missing required argument 'trace_value'"}
     service = (args or {}).get("service")
-    records, missing = correlate_logs.correlate(cfg, value, service_filter=service)
+    records, missing = correlate_logs.correlate(
+        cfg, value, service_filter=service, match=args.get("match", "substring"), key=args.get("key"))
+    total = len(records)
+    records = records[:args.get("max_records", 200)]
+    for record in records:
+        if len(record["line"]) > MAX_LOG_CHARS:
+            record["line"] = record["line"][:MAX_LOG_CHARS]
+            record["lineTruncated"] = True
     return {
         "value": value,
         "count": len(records),
         "records": records,
+        "totalCount": total,
+        "truncated": len(records) < total or any(r.get("lineTruncated") for r in records),
         "missingLogs": [{"service": n, "path": p} for n, p in missing],
     }
 
 
 def tool_tail_service_log(args):
-    cfg, err = _require_config()
+    cfg, err = _require_config(args)
     if err:
         return {"error": err}
     service = (args or {}).get("service")
@@ -140,9 +165,14 @@ def tool_tail_service_log(args):
         for line in tail_logs.tail_lines(path, lines):
             line = line.rstrip("\n")
             if tail_logs.matches(line, grep):
-                body.append(line)
+                body.append(line[:MAX_LOG_CHARS] + (" [truncated]" if len(line) > MAX_LOG_CHARS else ""))
         out.append({"service": name, "missing": False, "path": path, "lines": body})
     return {"services": out, "grep": grep, "linesPerService": lines}
+
+
+def tool_doctor(args):
+    path = _config_path(args)
+    return doctor.check_file(path or "spring-fleet.config.json")
 
 
 def tool_scan_repos_root(args):
@@ -156,7 +186,7 @@ def tool_scan_repos_root(args):
 
 
 def tool_find_service_log_path(args):
-    cfg, err = _require_config()
+    cfg, err = _require_config(args)
     if err:
         return {"error": err}
     service = (args or {}).get("service")
@@ -182,6 +212,12 @@ def tool_find_service_log_path(args):
 # ---------------------------------------------------------------------------
 
 TOOLS = [
+    {
+        "name": "doctor",
+        "description": "Read-only checks of fleet config, repositories, logs, ports and required executables; returns findings with fixes.",
+        "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
+        "impl": tool_doctor,
+    },
     {
         "name": "list_services",
         "description": (
@@ -210,21 +246,25 @@ TOOLS = [
         "description": (
             "Build a single cross-service chronological timeline for a "
             "trace value (W3C trace_id, span_id, sessionId, or any "
-            "substring in the logs). Returns the matching log records "
+            "substring in the logs). Use match=exact or key for exact trace matching. Returns the matching log records "
             "merged across services, tagged with service/file/lineNo, and "
-            "lists any services with no log file."
+            "lists any services with no log file. Defaults to the earliest 200 records; inspect truncated and totalCount."
         ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "trace_value": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The value to correlate on. Prefer an OTel trace_id (32 lowercase hex chars).",
                 },
                 "service": {
                     "type": "string",
                     "description": "Limit to a single service name (optional).",
                 },
+                "match": {"type": "string", "enum": ["substring", "exact"], "default": "substring"},
+                "key": {"type": "string", "minLength": 1, "description": "Specific trace key; implies exact matching."},
+                "max_records": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 200},
             },
             "required": ["trace_value"],
             "additionalProperties": False,
@@ -242,7 +282,7 @@ TOOLS = [
             "type": "object",
             "properties": {
                 "service": {"type": "string", "description": "Service name, or omit for all."},
-                "lines": {"type": "integer", "minimum": 1, "default": 50},
+                "lines": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 50},
                 "grep": {"type": "string", "description": "Substring filter (optional)."},
             },
             "additionalProperties": False,
@@ -282,6 +322,21 @@ TOOLS = [
 ]
 
 
+CONFIG_PATH_SCHEMA = {
+    "type": "string",
+    "minLength": 1,
+    "description": (
+        "Absolute path to the project's spring-fleet.config.json. Pass it "
+        "whenever the server may not run in the project directory (always "
+        "under Codex); otherwise SPRING_FLEET_CONFIG, then "
+        "<cwd>/spring-fleet.config.json, is used."
+    ),
+}
+for _tool in TOOLS:
+    if _tool["name"] != "scan_repos_root":  # takes a repos directory instead
+        _tool["inputSchema"]["properties"]["config_path"] = CONFIG_PATH_SCHEMA
+
+
 def _public_tool(t):
     return {k: v for k, v in t.items() if k != "impl"}
 
@@ -304,12 +359,27 @@ def _error(req_id, code, message, data=None):
 def handle(message):
     """Dispatch one JSON-RPC message. Returns the response dict, or None for
     notifications (which by spec receive no response)."""
+    if isinstance(message, list):
+        if not message:
+            return _error(None, -32600, "empty batch")
+        responses = [handle(item) if not isinstance(item, list) else
+                     _error(None, -32600, "nested batch") for item in message]
+        return [r for r in responses if r is not None] or None
+    if not isinstance(message, dict):
+        return _error(None, -32600, "request must be an object")
     method = message.get("method")
     req_id = message.get("id")
-    params = message.get("params") or {}
+    if (message.get("jsonrpc") != "2.0" or not isinstance(method, str)
+            or ("id" in message and (isinstance(req_id, bool) or not isinstance(req_id, (str, int))))):
+        return _error(None, -32600, "invalid JSON-RPC request")
 
     # Notifications have no id; we never respond.
     is_notification = "id" not in message
+    if is_notification:
+        return None
+    params = message.get("params", {})
+    if not isinstance(params, dict):
+        return _error(req_id, -32602, "params must be an object")
 
     if method == "initialize":
         return _result(req_id, {
@@ -329,10 +399,16 @@ def handle(message):
 
     if method == "tools/call":
         name = params.get("name")
-        args = params.get("arguments") or {}
+        args = params.get("arguments", {})
+        if not isinstance(name, str) or not isinstance(args, dict):
+            return _error(req_id, -32602, "tool name must be a string and arguments an object")
         tool = next((t for t in TOOLS if t["name"] == name), None)
         if tool is None:
             return _error(req_id, -32601, "unknown tool: {}".format(name))
+        errors = validate(args, tool["inputSchema"])
+        if errors:
+            return _result(req_id, {"isError": True, "content": [
+                {"type": "text", "text": "Invalid arguments: " + "; ".join(errors)}]})
         try:
             data = tool["impl"](args)
         except Exception as exc:  # noqa: BLE001 - exposed back to the model
@@ -342,6 +418,11 @@ def handle(message):
                     name, type(exc).__name__, exc)}],
             })
         text = json.dumps(data, indent=2, default=str)
+        # Bound the entire serialized payload, including unusually large
+        # configs and fleets. Do not return broken JSON or silently lose data.
+        if len(text) > MAX_OUTPUT_CHARS:
+            return _result(req_id, {"isError": True, "content": [{
+                "type": "text", "text": "Tool output exceeds 100000 characters. Narrow the service/filter, reduce max_records or lines, or use the CLI for full output."}]})
         is_error = isinstance(data, dict) and "error" in data
         return _result(req_id, {
             "isError": bool(is_error),

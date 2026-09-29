@@ -69,3 +69,13 @@ signal.
 - Tool name collisions across federated servers are resolved by the MCP
   client by prefixing with the server name (e.g.
   `fleet-inventory.search_inventory`).
+
+## Outside Claude Code
+
+- `${CLAUDE_PLUGIN_ROOT}` is the spring-fleet plugin root. Claude Code fills it in; in Codex it is the folder two directories above this SKILL.md.
+- Codex does not read `.mcp.json` for user servers. Register each federated server in `~/.codex/config.toml` (or the project's `.codex/config.toml`) instead:
+  ```toml
+  [mcp_servers.fleet-order]
+  url = "http://localhost:8081/order-v1/mcp"
+  ```
+  The bundled `spring-fleet` server is already registered by the plugin.

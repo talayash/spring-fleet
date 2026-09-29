@@ -4,9 +4,11 @@ shared handoff log so the main agent can refer back without re-running the
 subagent or relying on cleared context.
 
 Activation: wired via plugin.json `hooks.SubagentStop`. Receives the standard
-hook JSON on stdin which includes `subagent_name` and `output` (or a transcript
-path). Writes to <logDir>/.spring-fleet-handoff.log when the subagent is one
-of ours; ignores everything else.
+hook JSON on stdin. Claude Code and Codex both send `agent_type` (possibly
+plugin-namespaced, e.g. `spring-fleet:log-correlator`) with
+`last_assistant_message` and `agent_transcript_path`; older clients sent
+`subagent_name` and `output`. Writes to <logDir>/.spring-fleet-handoff.log
+when the subagent is one of ours; ignores everything else.
 
 Dependency-free (Python 3 stdlib only).
 """
@@ -59,8 +61,9 @@ def main():
     except (json.JSONDecodeError, ValueError):
         payload = {}
 
-    name = (payload.get("subagent_name") or payload.get("subagentName")
-            or payload.get("agent") or "")
+    name = (payload.get("agent_type") or payload.get("subagent_name")
+            or payload.get("subagentName") or payload.get("agent") or "")
+    name = name.rsplit(":", 1)[-1]  # strip a plugin namespace
     if name not in OUR_AGENTS:
         # Not our agent; silently no-op.
         print("{}")
@@ -71,10 +74,15 @@ def main():
         print("{}")
         return 0
 
-    output = (payload.get("output") or payload.get("response") or "").strip()
+    output = (payload.get("last_assistant_message") or payload.get("output")
+              or payload.get("response") or "").strip()
     if not output:
-        # Some clients hand us a transcript file instead of inline output.
-        transcript = payload.get("transcript_path") or payload.get("transcriptPath")
+        # Fall back to the subagent's own transcript. `transcript_path` alone
+        # is only trusted from legacy payloads: in current ones it points at
+        # the parent session, not the subagent.
+        transcript = payload.get("agent_transcript_path")
+        if not transcript and "agent_type" not in payload:
+            transcript = payload.get("transcript_path") or payload.get("transcriptPath")
         if transcript and os.path.isfile(transcript):
             try:
                 with open(transcript, "r", encoding="utf-8", errors="replace") as fh:

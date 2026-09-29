@@ -69,3 +69,7 @@ is idempotent and opt-in per service.
 - The template also keeps a `CONSOLE` appender, so IDE output is unchanged.
 - For services you will not modify, prefer the (future) `/run` tee approach
   instead of editing their logback config.
+
+## Outside Claude Code
+
+- `${CLAUDE_PLUGIN_ROOT}` is the spring-fleet plugin root. Claude Code fills it in; in Codex it is the folder two directories above this SKILL.md.
